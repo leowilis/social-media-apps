@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import ProviderContainer from "./provider/page";
 
 const sfPro = localFont({
   src: [
@@ -35,7 +36,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${sfPro.variable} antialiased`}>{children}</body>
+      <body className={`${sfPro.variable} antialiased`}>
+        <ProviderContainer>{children}</ProviderContainer>
+      </body>
     </html>
   );
 }

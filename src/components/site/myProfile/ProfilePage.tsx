@@ -146,7 +146,7 @@ export function ProfilePage({
             and memories. Make this space truly yours.
           </p>
           <Link href="/addpost">
-            <Button className="rounded-full bg-primary-300 font-semibold px-20">
+            <Button className="rounded-full bg-primary-300 font-semibold px-18">
               Upload My First Post
             </Button>
           </Link>
