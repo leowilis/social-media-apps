@@ -32,7 +32,7 @@ export function PostList() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col md:max-w-[720px] md:mx-auto md:w-full">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} currentUserId={me?.id} />
       ))}

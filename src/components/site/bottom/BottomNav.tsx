@@ -11,12 +11,19 @@ export function HomeBottomNav() {
   const [hoverAdd, setHoverAdd]         = useState(false);
   const [tapped, setTapped]             = useState<string | null>(null);
   const [searchActive, setSearchActive] = useState(false);
+  const [isMd, setIsMd]                 = useState(false);
   const lastScrollY = useRef(0);
 
   const isHomeActive    = pathname === "/" || pathname === "/home";
   const isProfileActive = pathname === "/myprofile" || pathname === "/myProfile" || pathname.startsWith("/profile/");
 
-  // Listen for search open/close from Navbar
+  useEffect(() => {
+    const check = () => setIsMd(window.innerWidth >= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     const onOpen  = () => setSearchActive(true);
     const onClose = () => setSearchActive(false);
@@ -44,6 +51,13 @@ export function HomeBottomNav() {
     setTapped(key);
     setTimeout(() => setTapped(null), 400);
   };
+
+  // Desktop sizes
+  const baseWidth = isMd ? 360 : 280;
+  const hoverWidth = isMd ? 460 : 320;
+  const addHoverWidth = isMd ? 180 : 148;
+  const addBaseSize = isMd ? 52 : 44;
+  const addHeight = isMd ? 52 : 44;
 
   return (
     <>
@@ -80,14 +94,14 @@ export function HomeBottomNav() {
 
       <nav
         aria-label="Bottom navigation"
-        className={`nav-enter pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-6 transition-all duration-500 ${
+        className={`nav-enter pointer-events-none fixed inset-x-0 bottom-4 md:bottom-6 z-40 flex justify-center px-6 transition-all duration-500 ${
           visible && !searchActive ? "translate-y-0 opacity-100" : "translate-y-24 opacity-0"
         }`}
       >
         <div
-          className="pointer-events-auto relative flex items-center justify-between px-3 py-2"
+          className="pointer-events-auto relative flex items-center justify-between px-3 py-2 md:px-7 md:py-2"
           style={{
-            width: hoverAdd ? 320 : 280,
+            width: hoverAdd ? hoverWidth : baseWidth,
             borderRadius: 30,
             transition: "width 0.4s cubic-bezier(0.34,1.56,0.64,1)",
             background: "rgba(10,10,18,0.96)",
@@ -102,14 +116,14 @@ export function HomeBottomNav() {
 
           {/* ── HOME ── */}
           <Link href="/" onClick={() => tap("home")} aria-current={isHomeActive ? "page" : undefined}
-            className="relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 rounded-2xl select-none">
+            className="relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 md:w-20 md:py-2 rounded-2xl select-none">
             {isHomeActive && (
               <div className="absolute inset-0 rounded-2xl"
                 style={{ background: "radial-gradient(ellipse at center, rgba(124,92,252,0.15) 0%, transparent 70%)" }} />
             )}
-            <IoHome className={`size-[18px] transition-colors duration-200 ${tapped === "home" ? "icon-tap" : ""}`}
+            <IoHome className={`size-[18px] md:size-5 transition-colors duration-200 ${tapped === "home" ? "icon-tap" : ""}`}
               style={{ color: isHomeActive ? "#b49fff" : "rgba(255,255,255,0.28)", filter: isHomeActive ? "drop-shadow(0 0 5px rgba(180,159,255,0.8))" : "none" }} />
-            <span className="text-[9px] font-semibold"
+            <span className="text-[9px] md:text-[11px] font-semibold"
               style={{ color: isHomeActive ? "#b49fff" : "rgba(255,255,255,0.22)", letterSpacing: "0.05em" }}>Home</span>
             {isHomeActive && (
               <div className="absolute bottom-0.5 left-1/2 h-0.5 w-4 rounded-full dot-pop"
@@ -122,8 +136,9 @@ export function HomeBottomNav() {
             onMouseEnter={() => setHoverAdd(true)} onMouseLeave={() => setHoverAdd(false)}
             className="btn-shimmer relative flex items-center justify-center select-none active:scale-95 overflow-hidden"
             style={{
-              height: 44, borderRadius: 999,
-              width: hoverAdd ? 148 : 44,
+              height: addHeight,
+              borderRadius: 999,
+              width: hoverAdd ? addHoverWidth : addBaseSize,
               transition: "width 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease",
               background: "linear-gradient(135deg, #c084fc 0%, #7c5cfc 45%, #4f28e0 100%)",
               boxShadow: hoverAdd
@@ -132,24 +147,24 @@ export function HomeBottomNav() {
             }}>
             <div className="absolute inset-x-3 top-1 h-px rounded-full pointer-events-none"
               style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)" }} />
-            <IoAdd className="size-5 text-white shrink-0 relative z-10"
+            <IoAdd className="size-5 md:size-6 text-white shrink-0 relative z-10"
               style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))", transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)", transform: hoverAdd ? "rotate(90deg)" : "rotate(0deg)" }} />
-            <span className="text-white text-[13px] font-bold relative z-10 whitespace-nowrap overflow-hidden"
-              style={{ maxWidth: hoverAdd ? 90 : 0, opacity: hoverAdd ? 1 : 0, transition: "max-width 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.05s, opacity 0.2s ease 0.1s", letterSpacing: "0.02em" }}>
+            <span className="text-white text-[13px] md:text-sm font-bold relative z-10 whitespace-nowrap overflow-hidden"
+              style={{ maxWidth: hoverAdd ? 120 : 0, opacity: hoverAdd ? 1 : 0, transition: "max-width 0.35s cubic-bezier(0.34,1.56,0.64,1) 0.05s, opacity 0.2s ease 0.1s", letterSpacing: "0.02em" }}>
               Add New Post
             </span>
           </Link>
 
           {/* ── PROFILE ── */}
           <Link href="/myProfile" onClick={() => tap("profile")} aria-current={isProfileActive ? "page" : undefined}
-            className="relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 rounded-2xl select-none">
+            className="relative flex flex-col items-center justify-center gap-0.5 w-14 py-1.5 md:w-20 md:py-2 rounded-2xl select-none">
             {isProfileActive && (
               <div className="absolute inset-0 rounded-2xl"
                 style={{ background: "radial-gradient(ellipse at center, rgba(124,92,252,0.15) 0%, transparent 70%)" }} />
             )}
-            <IoPerson className={`size-[18px] transition-colors duration-200 ${tapped === "profile" ? "icon-tap" : ""}`}
+            <IoPerson className={`size-[18px] md:size-5 transition-colors duration-200 ${tapped === "profile" ? "icon-tap" : ""}`}
               style={{ color: isProfileActive ? "#b49fff" : "rgba(255,255,255,0.28)", filter: isProfileActive ? "drop-shadow(0 0 5px rgba(180,159,255,0.8))" : "none" }} />
-            <span className="text-[9px] font-semibold"
+            <span className="text-[9px] md:text-[11px] font-semibold"
               style={{ color: isProfileActive ? "#b49fff" : "rgba(255,255,255,0.22)", letterSpacing: "0.05em" }}>Profile</span>
             {isProfileActive && (
               <div className="absolute bottom-0.5 left-1/2 h-0.5 w-4 rounded-full dot-pop"
