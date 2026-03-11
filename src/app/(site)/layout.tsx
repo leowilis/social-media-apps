@@ -1,31 +1,55 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Navbar from "@/components/site/header/Navbar";
 import { HomeBottomNav } from "@/components/site/bottom/BottomNav";
 import { LikeProvider } from "@/components/features/likes/LikeContext";
+import { useSearchParams } from "next/navigation";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const hasPost = !!searchParams.get("postId");
 
   return (
-    <LikeProvider>
-      <div className="min-h-screen bg-black">
-        {/* Hide navbar on desktop when post overlay is open */}
-        <div className={hasPost ? "md:hidden" : ""}>
-          <Navbar />
-        </div>
-
-        <main className={hasPost ? "md:pt-0 pt-20 pb-32 md:pb-0" : "pt-18 pb-32 md:pb-0 md:pt-2"}>
-          {children}
-        </main>
-
-        {/* Hide bottom nav on desktop */}
-        <div className={` ${hasPost ? "hidden" : ""}`}>
-          <HomeBottomNav />
-        </div>
+    <div className="min-h-screen bg-black">
+      {/* Navbar - hidden on desktop when post overlay is open */}
+      <div className={`${hasPost ? "md:hidden" : "block"}`}>
+        <Navbar />
       </div>
+
+      {/* Main content with proper padding */}
+      <main
+        className={`
+          ${
+            hasPost
+              ? "md:pt-0 pt-20 pb-32 md:pb-0"
+              : "pt-[72px] pb-32 md:pb-0 md:pt-2"
+          }
+        `}
+      >
+        {children}
+      </main>
+
+      {/* Bottom nav - hidden when post overlay is open */}
+      <div className={`${hasPost ? "hidden" : "block"}`}>
+        <HomeBottomNav />
+      </div>
+    </div>
+  );
+}
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <LikeProvider>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-black flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#7c5cfc] border-t-transparent rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <LayoutContent>{children}</LayoutContent>
+      </Suspense>
     </LikeProvider>
   );
 }

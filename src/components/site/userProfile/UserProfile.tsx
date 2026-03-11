@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { api } from "@/lib/axios";
 import { User } from "./types/userProfile";
+import { useRouter } from "next/router";
 
 function fmt(n = 0) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
@@ -806,6 +807,27 @@ function PostModal({
     </div>
   );
 }
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add resize listener
+    window.addEventListener("resize", checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  return isDesktop;
+}
+
 
 interface UserProfileProps {
   username: string;
@@ -813,7 +835,8 @@ interface UserProfileProps {
 }
 
 export default function UserProfile({ username, onBack }: UserProfileProps) {
-  
+  const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [activePostId, setActivePostId] = useState<number | string | null>(
     null,
   );
@@ -838,6 +861,7 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
       setActivePostId(itemId);
     } else {
       window.location.href = `/posts/${itemId}`;
+      router.push(`/posts/${itemId}`);
     }
   };
 
@@ -1422,7 +1446,7 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
       )}
 
       {/* Post Modal */}
-      {activePostId !== null && (
+      {activePostId !== null && isDesktop && (
         <PostModal
           postId={activePostId}
           onClose={() => setActivePostId(null)}
