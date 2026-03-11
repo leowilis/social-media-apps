@@ -18,10 +18,21 @@ export function useMyProfile() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get("/me")
+    api.get("/me")
       .then((res) => {
-        setProfile(res.data.data.profile);
+        const p = res.data.data.profile;
+        const s = res.data.data.stats;
+        setProfile({
+          id:             p.id,
+          name:           p.name,
+          username:       p.username,
+          avatarUrl:      p.avatarUrl ?? null,
+          bio:            p.bio ?? null,
+          postCount:      s.posts      ?? 0,
+          followerCount:  s.followers  ?? 0,
+          followingCount: s.following  ?? 0,
+          likeCount:      s.likes      ?? 0,
+        });
       })
       .finally(() => setIsLoading(false));
   }, []);

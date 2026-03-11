@@ -1,4 +1,4 @@
-import UserProfile from "@/components/userProfile/UserProfile";
+import UserProfile from "@/components/site/userProfile/UserProfile";
 
 interface Props {
   params: Promise<{ username: string }>;

@@ -2,6 +2,7 @@ import { api } from "@/lib/axios";
 import { useEffect, useState } from "react";
 
 export type Post = {
+  savedByMe: boolean;
   id: number;
   imageUrl: string;
   caption: string;
@@ -37,14 +38,21 @@ export function usePosts(): UsePostsReturn {
     try {
       setIsLoading(true);
       setIsError(false);
+
       const res = await api.get(`/posts?page=${currentPage}&limit=10`);
-      const newPosts: Post[] = res.data.data.posts;
-      
+
+      const newPosts: Post[] = res.data.data.posts.map((post: Post) => ({
+        ...post,
+        likedByMe: Boolean(post.likedByMe),
+        savedByMe: Boolean(post.savedByMe),
+      }));
 
       if (newPosts.length === 0) {
         setHasMore(false);
       } else {
-        setPosts((prev) => (currentPage === 1 ? newPosts : [...prev, ...newPosts]));
+        setPosts((prev) =>
+          currentPage === 1 ? newPosts : [...prev, ...newPosts]
+        );
       }
     } catch {
       setIsError(true);

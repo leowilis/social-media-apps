@@ -73,7 +73,7 @@ function Avatar({
         flexShrink: 0,
       }}
     >
-      {name[0]?.toUpperCase()}
+      {name?.[0]?.toUpperCase()}
     </div>
   );
 }
@@ -238,17 +238,12 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
       style={{
         background: "#0e0e13",
         minHeight: "100vh",
-        fontFamily: "'Outfit', sans-serif",
         color: "#f0f0f8",
-        maxWidth: 480,
+        maxWidth: "Fullscreen",
         margin: "0 auto",
         overflowX: "hidden",
       }}
     >
-      <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-      />
       <style>{`
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
@@ -372,14 +367,14 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
               >
                 {profile.name}
               </div>
-              <div style={{ color: "#555", fontSize: 13, marginTop: 2 }}>
-                @{profile.username}
+              <div style={{ color: "#FDFDFD", fontSize: 13, marginTop: 2 }}>
+                {profile.username}
               </div>
             </div>
           </div>
 
           {/* Follow + Message */}
-          <div style={{ padding: "14px 16px 0", display: "flex", gap: 10 }}>
+          <div style={{ padding: "14px 20px 0", display: "flex", gap: 20 }}>
             <button
               className="follow-btn"
               onClick={toggleFollow}
@@ -387,14 +382,14 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
               style={{
                 flex: 1,
                 padding: "11px 0",
-                borderRadius: 12,
+                borderRadius: 100,
                 border: profile.is_following ? "1px solid #2a2a38" : "none",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 fontWeight: 700,
                 fontSize: 15,
                 transition: "all 0.2s",
-                background: profile.is_following ? "#1a1a24" : "#7c5cfc",
+                background: profile.is_following ? "#1a1a24" : "#6936F2",
                 color: profile.is_following ? "#aaa" : "#fff",
                 opacity: followLoading ? 0.75 : 1,
                 display: "flex",
@@ -481,8 +476,7 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
             style={{
               display: "flex",
               margin: "16px 0 0",
-              borderTop: "1px solid #1a1a22",
-              borderBottom: "1px solid #1a1a22",
+              
             }}
           >
             {(
@@ -637,7 +631,7 @@ export default function UserProfile({ username, onBack }: UserProfileProps) {
                 No posts yet
               </div>
             ) : (
-  (Array.isArray(gridItems) ? gridItems : []).map((item) => (
+              (Array.isArray(gridItems) ? gridItems : []).map((item) => (
                 <div
                   key={String(item.id)}
                   className="g-item"

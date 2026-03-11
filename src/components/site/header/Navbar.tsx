@@ -2,13 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useHeader } from "./hooks/useHeader";
 import { useMe } from "@/components/site/header/hooks/useMe";
 import { setToken, setIsLoggedIn } from "@/store/authSlice";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +21,7 @@ import {
   IoLogOutOutline,
   IoBookmarkOutline,
 } from "react-icons/io5";
+import { Avatar as AvatarComp, AvatarFallback as AF, AvatarImage as AI } from "@/components/ui/avatar";
 import Logo from "@/public/assets/logo/Logo.svg";
 
 export default function Navbar() {
@@ -30,12 +30,31 @@ export default function Navbar() {
   const { me } = useMe();
   const dispatch = useDispatch();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen]     = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch]   = useState(false);
+  const [searchUsers, setSearchUsers] = useState<Array<{id:number;username:string;name:string;avatarUrl?:string}>>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setSearchUsers([]); return; }
+    setSearchLoading(true);
+    try {
+      const { default: axios } = await import("axios");
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const baseURL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+      const res = await axios.get(`${baseURL}/users/search`, {
+        params: { q, page: 1, limit: 10 },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      setSearchUsers(res.data.data?.users ?? []);
+    } catch { setSearchUsers([]); }
+    finally { setSearchLoading(false); }
+  }, []);
 
   const avatarFallback = me?.name?.[0]?.toUpperCase() ?? "";
-
-  // Use real name from API for profile header title
   const headerTitle = profileTitle === "My Profile" && me?.name ? me.name : profileTitle;
 
   const handleLogout = () => {
@@ -46,14 +65,16 @@ export default function Navbar() {
     router.push("/login");
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push(`/search${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ""}`);
+  };
+
   return (
     <>
       {/* Sidebar Overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
@@ -64,12 +85,8 @@ export default function Navbar() {
       >
         <div className="flex items-center justify-between px-5 py-5 border-b border-[rgba(126,145,183,0.2)]">
           <span className="font-bold text-white text-lg">Menu</span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="size-8 rounded-full text-white hover:bg-[rgba(126,145,183,0.18)]"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <Button variant="ghost" size="icon-sm" className="size-8 rounded-full text-white hover:bg-[rgba(126,145,183,0.18)]"
+            onClick={() => setSidebarOpen(false)}>
             <IoCloseOutline className="size-5" />
           </Button>
         </div>
@@ -81,7 +98,7 @@ export default function Navbar() {
           </Avatar>
           <div className="flex flex-col">
             <span className="font-bold text-white text-sm">{me?.name}</span>
-            <span className="text-xs text-[var(--neutral-500)]">@{me?.username}</span>
+            <span className="text-xs text-[var(--neutral-500)]">{me?.username}</span>
           </div>
         </div>
 
@@ -114,6 +131,7 @@ export default function Navbar() {
 
       {/* Navbar */}
       <header className="fixed inset-x-0 top-0 z-40 flex w-full flex-col bg-black text-white">
+
         {/* Desktop */}
         <div className="hidden h-20 items-center justify-between px-30 py-0 md:flex">
           <div className="flex items-center gap-3">
@@ -121,17 +139,14 @@ export default function Navbar() {
             <span className="text-2xl leading-none font-bold">Sociality</span>
           </div>
 
-          <div className="w-full max-w-122.75 h-12">
-            <div className="relative w-full">
-              <IoSearchOutline className="pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2 text-[var(--neutral-500)]" />
-              <Input
-                type="search"
-                placeholder="Search"
-                aria-label="Search"
-                className="h-12 rounded-full border-neutral-900 bg-neutral-950 px-4 pl-11 text-[14px] leading-[20px] text-[var(--base-pure-white)] shadow-none placeholder:text-[var(--neutral-500)] focus-visible:border-[rgba(126,145,183,0.48)] focus-visible:ring-0"
-              />
-            </div>
-          </div>
+          {/* Desktop search — opens overlay */}
+          <button
+            onClick={() => setShowSearch(true)}
+            className="flex items-center gap-3 w-full max-w-[490px] h-12 px-4 rounded-full border border-neutral-900 bg-neutral-950 text-[var(--neutral-500)] hover:border-[rgba(126,145,183,0.3)] transition-colors"
+          >
+            <IoSearchOutline className="size-[18px] shrink-0" />
+            <span className="text-sm">Search users...</span>
+          </button>
 
           {isLoggedIn ? (
             <Avatar className="size-12 border border-[rgba(126,145,183,0.32)] cursor-pointer"
@@ -161,10 +176,8 @@ export default function Navbar() {
                   className="size-8 rounded-full p-0 text-white hover:bg-[rgba(126,145,183,0.18)]">
                   <IoArrowBackOutline className="size-[20px]" />
                 </Button>
-                {/* Show real name instead of "My Profile" */}
                 <span className="text-md font-bold">{headerTitle}</span>
               </div>
-
               <Avatar className="size-8 border border-[rgba(126,145,183,0.32)] cursor-pointer"
                 onClick={() => setSidebarOpen(true)}>
                 <AvatarImage src={me?.avatarUrl ?? ""} alt={me?.name} />
@@ -173,29 +186,74 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <div className="flex items-center gap-3">
-                <Image src={Logo} alt="logo" width={30} height={30} priority />
-                <span className="text-2xl leading-none text-white font-bold">Sociality</span>
-              </div>
+              {showSearch ? (
+                /* ── Inline search bar — replaces logo & avatar ── */
+                <div className="flex items-center gap-2 w-full">
+                  <div
+                    className="flex flex-1 items-center gap-2 px-3.5 py-2 rounded-2xl"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(124,92,252,0.4)",
+                    }}
+                  >
+                    <IoSearchOutline className="size-4 shrink-0 text-[#a78bff]" />
+                    <input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        if (debounceRef.current) clearTimeout(debounceRef.current);
+                        debounceRef.current = setTimeout(() => doSearch(e.target.value), 350);
+                      }}
+                      placeholder="Search name or username..."
+                      className="flex-1 bg-transparent text-sm text-white placeholder:text-neutral-600 outline-none"
+                      onKeyDown={(e) => { if (e.key === "Escape") { setShowSearch(false); setSearchQuery(""); } }}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => { setSearchQuery(""); setSearchUsers([]); }}>
+                        <IoCloseOutline className="size-4 text-neutral-500" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setShowSearch(false); setSearchQuery(""); setSearchUsers([]); window.dispatchEvent(new Event("search-close")); }}
+                    className="shrink-0 text-sm font-semibold text-[#a78bff]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                /* ── Normal navbar ── */
+                <>
+                  <div className="flex items-center gap-3">
+                    <Image src={Logo} alt="logo" width={30} height={30} priority />
+                    <span className="text-2xl leading-none text-white font-bold">Sociality</span>
+                  </div>
 
-              <div className="flex items-center gap-4">
-                <Button type="button" size="icon" aria-label="Open search" className="size-5 text-white">
-                  <IoSearchOutline className="size-[20px]" />
-                </Button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => { setShowSearch(true); window.dispatchEvent(new Event("search-open")); }}
+                      aria-label="Search"
+                      className="flex items-center justify-center size-9 rounded-full transition-colors hover:bg-[rgba(126,145,183,0.12)]"
+                    >
+                      <IoSearchOutline className="size-[22px] text-white" />
+                    </button>
 
-                {isLoggedIn ? (
-                  <Avatar className="size-10 border border-[rgba(126,145,183,0.32)] cursor-pointer"
-                    onClick={() => setSidebarOpen(true)}>
-                    <AvatarImage src={me?.avatarUrl ?? ""} alt={me?.name} />
-                    <AvatarFallback>{avatarFallback}</AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <Button type="button" size="icon" aria-label="Open menu" className="size-5 text-white"
-                    onClick={() => setMenuOpen(!menuOpen)}>
-                    {menuOpen ? <IoCloseOutline className="size-[30px]" /> : <IoMenuOutline className="size-[30px]" />}
-                  </Button>
-                )}
-              </div>
+                    {isLoggedIn ? (
+                      <Avatar className="size-9 border border-[rgba(126,145,183,0.32)] cursor-pointer"
+                        onClick={() => setSidebarOpen(true)}>
+                        <AvatarImage src={me?.avatarUrl ?? ""} alt={me?.name} />
+                        <AvatarFallback>{avatarFallback}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Button type="button" size="icon" aria-label="Open menu" className="size-5 text-white"
+                        onClick={() => setMenuOpen(!menuOpen)}>
+                        {menuOpen ? <IoCloseOutline className="size-[30px]" /> : <IoMenuOutline className="size-[30px]" />}
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -212,9 +270,46 @@ export default function Navbar() {
         )}
 
         <Separator className="bg-[rgba(126,145,183,0.2)]" />
+
+        {/* Inline search results — full screen below navbar */}
+        {showSearch && searchQuery.trim() && (
+          <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto"
+            style={{ background: "#08080f" }}>
+            {searchLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="size-5 rounded-full border-2 border-[#7c5cfc] border-t-transparent animate-spin" />
+              </div>
+            ) : searchUsers.length === 0 ? (
+              <div className="flex flex-col items-center py-10 gap-1">
+                <p className="text-sm font-semibold text-neutral-400">No results found</p>
+                <p className="text-xs text-neutral-600">Change your keyword</p>
+              </div>
+            ) : (
+              <div className="px-3 py-2 space-y-0.5">
+                {searchUsers.map((user) => (
+                  <Link key={user.id} href={`/profile/${user.username}`}
+                    onClick={() => { setShowSearch(false); setSearchQuery(""); setSearchUsers([]); window.dispatchEvent(new Event("search-close")); }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/[0.04] transition-colors"
+                  >
+                    <Avatar className="size-10 shrink-0" style={{ border: "1.5px solid rgba(124,92,252,0.2)" }}>
+                      <AvatarImage src={user.avatarUrl ?? ""} alt={user.name} />
+                      <AvatarFallback className="text-sm font-bold" style={{ background: "#1a1a2e", color: "#a78bff" }}>
+                        {user.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                      <p className="text-xs text-neutral-500 truncate">@{user.username}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
-      <div className=" md:h-[81px]" />
+      <div className="md:h-[81px]" />
     </>
   );
 }

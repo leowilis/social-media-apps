@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { PostCard } from "./PostCard";
 import { usePosts } from "./hooks/usePosts";
+import { PostCard } from "./PostCard";
+import { useMe } from "@/components/site/header/hooks/useMe";
 
 export function PostList() {
   const { posts, isLoading, isError, hasMore, loadMore } = usePosts();
+  const { me } = useMe();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -16,7 +17,7 @@ export function PostList() {
           loadMore();
         }
       },
-      { threshold: 1 }
+      { threshold: 1 },
     );
     if (bottomRef.current) observer.observe(bottomRef.current);
     return () => observer.disconnect();
@@ -33,10 +34,9 @@ export function PostList() {
   return (
     <div className="flex flex-col">
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard key={post.id} post={post} currentUserId={me?.id} />
       ))}
 
-      {/* Infinite scroll trigger */}
       <div ref={bottomRef} className="h-4" />
 
       {isLoading && (
