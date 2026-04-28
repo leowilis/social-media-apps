@@ -2,9 +2,11 @@ import { IoCheckmark } from "react-icons/io5";
 
 interface PostToastProps {
   message: string;
+  /** When true, the toast slides in from the top with a spring animation. */
   show: boolean;
 }
 
+/** Lightweight toast notification that appears at the top of the screen. */
 export function PostToast({ message, show }: PostToastProps) {
   return (
     <div
