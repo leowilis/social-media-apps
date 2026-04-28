@@ -5,9 +5,14 @@ interface DeleteDialogProps {
   description: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** When true, shows a spinner on the Delete button and disables both buttons. */
   loading?: boolean;
 }
 
+/**
+ * Reusable confirmation dialog for destructive actions.
+ * Used for both post and comment deletion.
+ */
 export function DeleteDialog({
   title,
   description,
@@ -17,10 +22,10 @@ export function DeleteDialog({
 }: DeleteDialogProps) {
   return (
     <>
-      <div
-        className="fixed inset-0 z-[998] bg-black/70 backdrop-blur-sm"
-        onClick={onCancel}
-      />
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[998] bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+
+      {/* Modal */}
       <div
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999] w-[85vw] max-w-xs rounded-3xl overflow-hidden"
         style={{
@@ -58,11 +63,10 @@ export function DeleteDialog({
             className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center disabled:opacity-50"
             style={{ background: "linear-gradient(135deg, #f87171 0%, #ef4444 100%)", boxShadow: "0 4px 16px rgba(239,68,68,0.35)" }}
           >
-            {loading ? (
-              <div className="size-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-            ) : (
-              "Delete"
-            )}
+            {loading
+              ? <div className="size-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              : "Delete"
+            }
           </button>
         </div>
       </div>
