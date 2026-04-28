@@ -1,37 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
-import { store } from "@/lib/store";
-import { Provider, useDispatch } from "react-redux";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { setToken, setIsLoggedIn } from "@/store/authSlice";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 60 * 1000,
+    },
+  },
+});
 
-function AuthInitializer({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      dispatch(setToken(token));
-      dispatch(setIsLoggedIn(true));
-    }
-  }, [dispatch]);
-
-  return <>{children}</>;
-}
-
-export default function ProviderContainer({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+/** Wraps the app with TanStack Query context. */
+export default function ProviderContainer({ children }: { children: React.ReactNode }) {
   return (
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <AuthInitializer>{children}</AuthInitializer>
-      </QueryClientProvider>
-    </Provider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
   );
 }
