@@ -1,39 +1,37 @@
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, usePathname } from 'next/navigation';
 
-const Profile_Routes = ["/myprofile", "/editprofile", "/addpost"];
+// Route helpers
 
-function getProfileTitle(pathname: string) {
-  if (pathname === "/addpost") return "Add Post";
-  if (pathname === "/editprofile") return "Edit Profile";
-  if (pathname === "/myprofile") return "My Profile";
-  if (!pathname.startsWith("/profile")) return "Profile";
+const PROFILE_ROUTES = ['/myProfile', '/editprofile', '/addpost', '/profile/'];
 
-  const profileId = pathname.split("/")[2] ?? "";
-  if (!profileId || profileId.toLowerCase() === "id") return "My Profile";
-
-  const words = profileId.replace(/[-_]+/g, " ").split(" ").filter(Boolean);
-  return words.map((word) => word[0].toUpperCase() + word.slice(1)).join(" ");
+/**
+ * Returns whether the current path is a "profile-like" route
+ * that should show a back button instead of the logo.
+ */
+function getIsProfileRoute(pathname: string): boolean {
+  return PROFILE_ROUTES.some((r) => pathname.startsWith(r));
 }
 
+/**
+ * Derives the header title from the current pathname.
+ * Falls back to an empty string for unknown routes.
+ */
+function getProfileTitle(pathname: string): string {
+  if (pathname === '/editprofile') return 'Edit Profile';
+  if (pathname === '/addpost') return 'Add Post';
+  if (pathname === '/myProfile') return 'My Profile';
+  return '';
+}
+
+// Hook
+
 export function useHeader() {
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
 
-  const isProfileRoute =
-    Profile_Routes.includes(pathname) || pathname.startsWith("/profile/");
-
-  const profileTitle = getProfileTitle(pathname);
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-    if (pathname === "/editprofile") {
-      router.push("/myprofile");
-      return;
-    }
-    router.push("/home");
+  return {
+    isProfileRoute: getIsProfileRoute(pathname),
+    profileTitle: getProfileTitle(pathname),
+    handleBack: () => router.back(),
   };
-  return { pathname, isProfileRoute, profileTitle, handleBack };
 }
