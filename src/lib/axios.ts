@@ -1,27 +1,26 @@
-import axios, { type InternalAxiosRequestConfig } from 'axios';
-import { clearAuth } from '@/store/authSlice';
-import { store } from '@/store/store';
+import axios from 'axios';
 
 /**
  * Preconfigured Axios instance for API calls
- * Uses a base URL and default JSON header
  */
-export const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 /**
  * Request interceptor
  * Automatically injects Bearer token from Redux store into headers
  */
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = store.getState().auth.token;
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
-
   return config;
 });
 
@@ -34,16 +33,14 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
  *   - Redirects user to login page (client-side only)
  */
 api.interceptors.response.use(
-  (res) => res,
-  (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      store.dispatch(clearAuth());
-
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
     }
-
     return Promise.reject(error);
   },
 );
+
+export default api;
