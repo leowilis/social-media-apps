@@ -1,29 +1,31 @@
-import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAppDispatch } from "@/store/hooks";
+import { clearAuth } from "@/store/authSlice";
+
+interface UseLogoutOptions {
+  /** Called synchronously before the Redux state is cleared and redirect fires. */
+  onBeforeLogout?: () => void;
+}
 
 /**
- * Shared logout hook.
- *
- * Clears the auth token from localStorage and cookies, purges all
- * TanStack Query cache, and redirects the user to the login page.
- *
- * Use this instead of inlining logout logic in every component
- * (e.g. Navbar, ProfileLayout, sidebar menus).
+ * Returns a `logout` function that:
+ * 1. Calls `onBeforeLogout` (e.g. close sidebar/dropdown)
+ * 2. Clears Redux auth state (also clears localStorage + cookie via authSlice)
+ * 3. Clears TanStack Query cache so stale user data doesn't persist
+ * 4. Redirects to `/login`
  */
-export function useLogout({
-  onBeforeLogout,
-}: { onBeforeLogout?: () => void } = {}) {
+export function useLogout({ onBeforeLogout }: UseLogoutOptions = {}) {
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const logout = useCallback(() => {
+  const logout = (): void => {
     onBeforeLogout?.();
-    localStorage.removeItem('token');
-    document.cookie = 'token=; path=/; max-age=0';
+    dispatch(clearAuth());
     queryClient.clear();
-    router.push('/login');
-  }, [onBeforeLogout, queryClient, router]);
+    router.push("/login");
+  };
 
   return logout;
 }
