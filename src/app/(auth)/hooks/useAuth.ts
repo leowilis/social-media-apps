@@ -6,75 +6,75 @@ import { useAppDispatch } from '@/store/hooks';
 import type { AuthUser } from '@/store/authSlice';
 import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth';
 
-// Auth API response structure
+// Types
+
 interface AuthApiResponse {
   token: string;
   user: AuthUser;
 }
 
-/**
- * Auth hook
- * Handles login, register, and logout flows using React Query + Redux
- */
+// Hook
+
 export function useAuth() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  //  Redirect target after login
-  const returnTo = searchParams.get('returnTo') ?? '/feed';
+  const returnTo = searchParams.get('returnTo') ?? '/';
 
   // Login
-
   const loginMutation = useMutation<AuthApiResponse, Error, LoginFormData>({
-    mutationFn: async (data) => {
+    mutationFn: async (data: LoginFormData): Promise<AuthApiResponse> => {
       const res = await api.post<AuthApiResponse>('/auth/login', data);
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: AuthApiResponse): void => {
       dispatch(setAuth({ user: data.user, token: data.token }));
       router.push(returnTo);
     },
   });
 
   // Register
-
   const registerMutation = useMutation<
     AuthApiResponse,
     Error,
     RegisterFormData
   >({
-    mutationFn: async (data) => {
+    mutationFn: async (data: RegisterFormData): Promise<AuthApiResponse> => {
       const { confirmPassword: _omit, ...body } = data;
       const res = await api.post<AuthApiResponse>('/auth/register', body);
       return res.data;
     },
-    onSuccess: (data) => {
-      dispatch(setAuth({ user: data.user, token: data.token }));
-      router.push('/feed');
+    onSuccess: (): void => {
+      router.push('/login');
     },
   });
 
-  // Logout
-
-  // Clears auth state and redirects to login page
-  const logout = () => {
+  // ── Logout ─
+  const logout = (): void => {
     dispatch(clearAuth());
     router.push('/login');
   };
 
   return {
-    // actions
-    login: loginMutation.mutate,
-    register: registerMutation.mutate,
-    logout,
-
-    // login state
+    /**
+     * Call login with form data.
+     * Wrap in an arrow function when passing to React Hook Form handleSubmit:
+     *   onSubmit={handleSubmit((data) => login(data))}
+     *   OR define a typed onSubmit handler:
+     *   const onSubmit = (data: LoginFormData): void => login(data);
+     */
+    login: (data: LoginFormData): void => {
+      loginMutation.mutate(data);
+    },
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error?.message ?? null,
 
-    // register state
+    register: (data: RegisterFormData): void => {
+      registerMutation.mutate(data);
+    },
     isRegistering: registerMutation.isPending,
     registerError: registerMutation.error?.message ?? null,
+
+    logout,
   };
 }
