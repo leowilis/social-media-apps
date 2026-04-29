@@ -1,8 +1,9 @@
-import { api } from "@/lib/axios";
-import { useEffect, useState } from "react";
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { api } from '@/lib/axios';
+
+// Types
 
 export type Post = {
-  savedByMe: boolean;
   id: number;
   imageUrl: string;
   caption: string;
@@ -16,60 +17,46 @@ export type Post = {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  savedByMe: boolean;
 };
 
-type UsePostsReturn = {
-  posts: Post[];
-  isLoading: boolean;
-  isError: boolean;
-  page: number;
-  hasMore: boolean;
-  loadMore: () => void;
-};
+// API
 
-export function usePosts(): UsePostsReturn {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+async function fetchFeed(page: number): Promise<Post[]> {
+  const res = await api.get('/feed', { params: { page, limit: 10 } });
+  return (res.data.data?.posts ?? []).map((p: Post) => ({
+    ...p,
+    likedByMe: Boolean(p.likedByMe),
+    savedByMe: Boolean(p.savedByMe),
+  }));
+}
 
-  const fetchPosts = async (currentPage: number) => {
-    try {
-      setIsLoading(true);
-      setIsError(false);
+// Hook
 
-      const res = await api.get(`/posts?page=${currentPage}&limit=10`);
+/**
+ * Fetches the user's feed using infinite pagination.
+ *
+ * Uses TanStack Query `useInfiniteQuery` as the single source of truth —
+ * no local state duplication. Invalidate `['feed']` after create/delete
+ * to keep all lists in sync automatically.
+ */
+export function usePosts() {
+  const query = useInfiniteQuery({
+    queryKey: ['feed'],
+    queryFn: ({ pageParam }) => fetchFeed(pageParam as number),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === 10 ? allPages.length + 1 : undefined,
+  });
 
-      const newPosts: Post[] = res.data.data.posts.map((post: Post) => ({
-        ...post,
-        likedByMe: Boolean(post.likedByMe),
-        savedByMe: Boolean(post.savedByMe),
-      }));
+  const posts = query.data?.pages.flat() ?? [];
 
-      if (newPosts.length === 0) {
-        setHasMore(false);
-      } else {
-        setPosts((prev) =>
-          currentPage === 1 ? newPosts : [...prev, ...newPosts]
-        );
-      }
-    } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
+  return {
+    posts,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    hasMore: query.hasNextPage,
+    loadMore: query.fetchNextPage,
+    isFetchingMore: query.isFetchingNextPage,
   };
-
-  useEffect(() => {
-    fetchPosts(page);
-  }, [page]);
-
-  const loadMore = () => {
-    if (!isLoading && hasMore) {
-      setPage((prev) => prev + 1);
-    }
-  };
-
-  return { posts, isLoading, isError, page, hasMore, loadMore };
 }
