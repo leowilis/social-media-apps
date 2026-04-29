@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   IoPersonOutline,
   IoBookmarkOutline,
@@ -9,30 +6,32 @@ import {
   IoLogOutOutline,
 } from 'react-icons/io5';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { MeData } from '@/components/site/header/hooks/useMe';
+
 // Types
 
-interface Me {
-  name?: string;
-  username?: string;
-  avatarUrl?: string;
-}
-
 interface DesktopUserDropdownProps {
-  me?: Me;
+  me: MeData | undefined;
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
   onLogout: () => void;
 }
 
+// Nav items config
+
+const DROPDOWN_ITEMS = [
+  { href: '/myProfile', label: 'My Profile', icon: IoPersonOutline },
+  { href: '/myProfile', label: 'Saved Posts', icon: IoBookmarkOutline },
+  { href: '/editprofile', label: 'Edit Profile', icon: IoSettingsOutline },
+] as const;
+
 // Component
 
 /**
- * Desktop avatar button + dropdown menu.
- *
- * Extracted from Navbar to keep that file focused on layout logic.
- * The parent owns the open/close state and passes `onLogout` so
- * this component stays presentation-only.
+ * Avatar + name button that toggles a dropdown with user actions.
+ * Closes when clicking the backdrop or selecting a link.
  */
 export function DesktopUserDropdown({
   me,
@@ -47,10 +46,12 @@ export function DesktopUserDropdown({
     <div className='relative shrink-0'>
       {/* Trigger */}
       <button
-        className='flex items-center gap-3 cursor-pointer'
+        type='button'
         onClick={onToggle}
         aria-expanded={open}
         aria-haspopup='menu'
+        aria-label='Open user menu'
+        className='flex items-center gap-3 cursor-pointer'
       >
         <Avatar className='size-12 border border-[rgba(126,145,183,0.32)]'>
           <AvatarImage src={me?.avatarUrl ?? ''} alt={me?.name} />
@@ -62,8 +63,12 @@ export function DesktopUserDropdown({
       {/* Dropdown */}
       {open && (
         <>
-          {/* Click-away backdrop */}
-          <div className='fixed inset-0 z-40' onClick={onClose} />
+          {/* Backdrop */}
+          <div
+            className='fixed inset-0 z-40'
+            onClick={onClose}
+            aria-hidden='true'
+          />
 
           <div
             role='menu'
@@ -94,35 +99,15 @@ export function DesktopUserDropdown({
 
             {/* Links */}
             <div className='px-2 py-2'>
-              {[
-                {
-                  href: '/myProfile',
-                  icon: <IoPersonOutline className='size-4 text-neutral-500' />,
-                  label: 'My Profile',
-                },
-                {
-                  href: '/myProfile',
-                  icon: (
-                    <IoBookmarkOutline className='size-4 text-neutral-500' />
-                  ),
-                  label: 'Saved Posts',
-                },
-                {
-                  href: '/editprofile',
-                  icon: (
-                    <IoSettingsOutline className='size-4 text-neutral-500' />
-                  ),
-                  label: 'Edit Profile',
-                },
-              ].map(({ href, icon, label }) => (
+              {DROPDOWN_ITEMS.map(({ href, label, icon: Icon }) => (
                 <Link
-                  key={label}
-                  href={href}
+                  key={`${href}-${label}`}
                   role='menuitem'
+                  href={href}
                   onClick={onClose}
                   className='flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/[0.05] transition-colors'
                 >
-                  {icon}
+                  <Icon className='size-4 text-neutral-500' />
                   <span className='text-sm font-semibold'>{label}</span>
                 </Link>
               ))}
@@ -132,6 +117,7 @@ export function DesktopUserDropdown({
             <div className='px-2 pb-2 border-t border-[rgba(255,255,255,0.06)] pt-2'>
               <button
                 role='menuitem'
+                type='button'
                 onClick={onLogout}
                 className='flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors'
               >
