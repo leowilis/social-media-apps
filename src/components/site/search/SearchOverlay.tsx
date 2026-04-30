@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { IoSearchOutline, IoCloseOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSearch, type SearchUser } from '@/hooks/search/useSearch';
-
+import { useSearch } from '@/hooks/search/useSearch';
+import type { UserProfile } from '@/types/user';
 // Types
 
 interface SearchOverlayProps {
@@ -64,7 +64,7 @@ function UserResultItem({
   index,
   onClose,
 }: {
-  user: SearchUser;
+  user: UserProfile;
   index: number;
   onClose: () => void;
 }) {
