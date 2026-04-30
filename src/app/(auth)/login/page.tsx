@@ -17,9 +17,8 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
-
-import { loginSchema, type LoginFormData } from '@/lib/api/auth';
-import { useAuth } from '../../../hooks/auth/useAuth';
+import { loginSchema, type LoginFormData } from '@/schema/auth.scema';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 import Logo from '@/public/assets/logo/Logo.svg';
 import Gradient from '@/public/assets/gradient/Gradient.svg';
