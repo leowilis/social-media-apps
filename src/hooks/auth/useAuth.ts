@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { setAuth, clearAuth } from '@/store/authSlice';
+import { setAuth, clearAuth } from '@/store/slices/authSlice';
 import { useAppDispatch } from '@/store/hooks';
-import { authApi } from '@/lib/api/auth';
-import type {
-  LoginFormData,
-  LoginResponse,
-  RegisterFormData,
+import {
+  authApi,
+  type AuthResponse,
+  type LoginFormData,
+  type RegisterFormData,
 } from '@/lib/api/auth';
 
 // Hook
@@ -26,7 +26,7 @@ export function useAuth() {
   const returnTo = searchParams.get('from') ?? '/';
 
   // Login
-  const loginMutation = useMutation<LoginResponse, Error, LoginFormData>({
+  const loginMutation = useMutation<AuthResponse, Error, LoginFormData>({
     mutationFn: (data) => authApi.login(data).then((r) => r.data),
     onSuccess: (data) => {
       dispatch(setAuth({ user: data.data.user, token: data.data.token }));
@@ -35,7 +35,7 @@ export function useAuth() {
   });
 
   // Register
-  const registerMutation = useMutation<LoginResponse, Error, RegisterFormData>({
+  const registerMutation = useMutation<AuthResponse, Error, RegisterFormData>({
     mutationFn: (data) => {
       const body: Omit<RegisterFormData, 'confirmPassword'> = {
         name: data.name,
