@@ -7,7 +7,7 @@ import { likesApi } from '@/lib/api/likes';
 import { savesApi } from '@/lib/api/saves';
 import { postsApi } from '@/lib/api/posts';
 import { postKeys } from './usePosts';
-import { meKeys } from '@/hooks/profile/useMe';
+import { meKeys } from '@/hooks/profile/key';
 
 // Types
 
