@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const TOKEN_KEY = 'auth_token';
+
 /**
- * Preconfigured Axios instance for API calls
+ * Preconfigured Axios instance for API calls.
+ * Base URL is read from NEXT_PUBLIC_API_BASE_URL environment variable
  */
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -12,11 +15,11 @@ export const api = axios.create({
 
 /**
  * Request interceptor
- * Automatically injects Bearer token from Redux store into headers
+ * Automatically injects Bearer token from localStorage into every request header
  */
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -36,7 +39,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+      localStorage.removeItem(TOKEN_KEY);
       window.location.href = '/login';
     }
     return Promise.reject(error);
