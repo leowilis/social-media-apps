@@ -7,6 +7,20 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateUser } from '@/store/slices/authSlice';
 import { meKeys } from '@/hooks/profile/key';
 
+// Types
+
+// Profile data returned by GET /me.
+export type MeData = {
+  id: number;
+  name: string;
+  username: string;
+  avatarUrl?: string;
+  bio?: string;
+  postCount: number;
+  followerCount: number;
+  followingCount: number;
+};
+
 // Hooks
 
 /**
