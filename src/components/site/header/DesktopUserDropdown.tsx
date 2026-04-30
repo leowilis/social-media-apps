@@ -7,7 +7,7 @@ import {
 } from 'react-icons/io5';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { MeData } from '@/components/site/header/hooks/useMe';
+import type { MeData } from '@/hooks/profile/useMe';
 
 // Types
 

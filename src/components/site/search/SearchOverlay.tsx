@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { IoSearchOutline, IoCloseOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useSearch, type SearchUser } from '@/components/site/search/hooks/useSearch';
+import { useSearch, type SearchUser } from '@/hooks/search/useSearch';
 
 // Types
 

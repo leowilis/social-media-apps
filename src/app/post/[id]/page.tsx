@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { PostDetail } from "@/components/site/post/PostDetail";
-import { api } from "@/lib/axios";
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { PostDetail } from '@/components/site/post/ui/PostDetail';
+import { api } from '@/lib/axios';
 
 export default function PostPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const postId = Number(params.id);
 
-  const hasSearchParams = searchParams.has("liked");
-  const hasLikedParam = searchParams.has("liked");
-  const hasSavedParam = searchParams.has("saved");
-  const initialLiked = searchParams.get("liked") === "true";
-  const initialLikeCount = searchParams.get("likeCount")
-    ? Number(searchParams.get("likeCount"))
+  const hasSearchParams = searchParams.has('liked');
+  const hasLikedParam = searchParams.has('liked');
+  const hasSavedParam = searchParams.has('saved');
+  const initialLiked = searchParams.get('liked') === 'true';
+  const initialLikeCount = searchParams.get('likeCount')
+    ? Number(searchParams.get('likeCount'))
     : undefined;
-  const initialSaved = searchParams.get("saved") === "true";
+  const initialSaved = searchParams.get('saved') === 'true';
 
   const [currentUserId, setCurrentUserId] = useState<number | undefined>(
     undefined,
@@ -28,7 +28,7 @@ export default function PostPage() {
 
   useEffect(() => {
     const fetchMe = api
-      .get("/me")
+      .get('/me')
       .then((res) => {
         const profile = res.data.data?.profile ?? res.data.data;
         setCurrentUserId(profile?.id);
@@ -45,7 +45,7 @@ export default function PostPage() {
         .catch(() => {});
 
       const fetchSaved = api
-        .get("/me/saved")
+        .get('/me/saved')
         .then((res) => {
           const savedPosts: any[] = res.data.data?.posts ?? res.data.data ?? [];
           setSavedByMe(savedPosts.some((p: any) => Number(p.id) === postId));
@@ -62,8 +62,8 @@ export default function PostPage() {
 
   if (!ready)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0e0e13]">
-        <div className="size-6 rounded-full border-2 border-[#7c5cfc] border-t-transparent animate-spin" />
+      <div className='flex items-center justify-center min-h-screen bg-[#0e0e13]'>
+        <div className='size-6 rounded-full border-2 border-[#7c5cfc] border-t-transparent animate-spin' />
       </div>
     );
 

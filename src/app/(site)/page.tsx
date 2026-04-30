@@ -1,39 +1,53 @@
-"use client";
+'use client';
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { PostList } from "@/components/site/post/PostList";
-import { PostDetail } from "@/components/site/post/PostDetail";
-import { api } from "@/lib/axios";
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { PostList } from '@/components/site/post/ui/PostList';
+import { PostDetail } from '@/components/site/post/ui/PostDetail';
+import { api } from '@/lib/axios';
 
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const postId = searchParams.get("postId") ? Number(searchParams.get("postId")) : null;
+  const postId = searchParams.get('postId')
+    ? Number(searchParams.get('postId'))
+    : null;
 
-  const [currentUserId, setCurrentUserId] = useState<number | undefined>(undefined);
-  const [initialLiked, setInitialLiked]   = useState<boolean>(false);
-  const [initialSaved, setInitialSaved]   = useState<boolean>(false);
+  const [currentUserId, setCurrentUserId] = useState<number | undefined>(
+    undefined,
+  );
+  const [initialLiked, setInitialLiked] = useState<boolean>(false);
+  const [initialSaved, setInitialSaved] = useState<boolean>(false);
   const [initialLikeCount, setInitialLikeCount] = useState<number>(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    api.get("/me").then((res) => {
-      const profile = res.data.data?.profile ?? res.data.data;
-      setCurrentUserId(profile?.id);
-    }).catch(() => {});
+    api
+      .get('/me')
+      .then((res) => {
+        const profile = res.data.data?.profile ?? res.data.data;
+        setCurrentUserId(profile?.id);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!postId) { setReady(false); return; }
-    setInitialLiked(searchParams.get("liked") === "true");
-    setInitialSaved(searchParams.get("saved") === "true");
-    setInitialLikeCount(Number(searchParams.get("likeCount")) || 0);
-    setReady(true);
-  }, [postId]);
+  if (!postId) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReady(false);
+    setInitialLiked(false);
+    setInitialSaved(false);
+    setInitialLikeCount(0);
+    return;
+  }
+  setInitialLiked(searchParams.get('liked') === 'true');
+  setInitialSaved(searchParams.get('saved') === 'true');
+  setInitialLikeCount(Number(searchParams.get('likeCount')) || 0);
+  setReady(true);
+}, [postId, searchParams]);
 
   const handleClose = () => {
-    router.push("?", { scroll: false });
+    router.push('?', { scroll: false });
   };
 
   return (
@@ -42,7 +56,7 @@ export default function Home() {
 
       {/* Desktop post overlay */}
       {postId && ready && (
-        <div className="hidden md:block">
+        <div className='hidden md:block'>
           <PostDetail
             postId={postId}
             currentUserId={currentUserId}

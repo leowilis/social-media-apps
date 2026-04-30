@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
-import { useEditProfile } from "./hooks/useEditProfile";
+import { useEditProfile } from "../../../hooks/profile/useEditProfile";
 
 export default function EditProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);

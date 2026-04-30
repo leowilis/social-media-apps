@@ -3,8 +3,8 @@
 import { ProfilePage } from "@/components/site/myProfile/ProfilePage";
 
 import { useState } from "react";
-import { useMyProfile } from "./hooks/useMyProfile";
-import { useMyPosts } from "./hooks/useMyPost";
+import { useMyProfile } from "../../../hooks/profile/useMyProfile";
+import { useMyPosts } from "../../../hooks/profile/useMyPost";
 
 export default function MyProfilePage() {
   const [activeTab, setActiveTab] = useState<"gallery" | "saved">("gallery");
