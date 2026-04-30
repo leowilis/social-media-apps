@@ -1,4 +1,4 @@
-import UserProfile from "@/components/site/userProfile/UserProfile";
+import { ProfilePage } from '@/components/site/userProfile/UserProfile';
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -6,5 +6,5 @@ interface Props {
 
 export default async function UserProfilePage({ params }: Props) {
   const { username } = await params;
-  return <UserProfile username={username} />;
+  return <ProfilePage username={username} />;
 }
