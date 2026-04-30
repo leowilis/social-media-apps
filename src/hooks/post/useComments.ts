@@ -1,107 +1,157 @@
-import { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/axios";
+'use client';
 
-export interface Comment {
-  id: number;
-  content: string;
-  createdAt: string;
-  author: {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl?: string;
-  };
+
+import {
+  useMutation,
+  useInfiniteQuery,
+  useQueryClient,
+  InfiniteData,
+} from '@tanstack/react-query';
+import { commentsApi, type Comment, type CommentsResponse } from '@/lib/api/comment';
+
+
+// Types
+
+type CommentsPage = CommentsResponse['data'];
+type CommentsCache = InfiniteData<CommentsPage>;
+
+// Query Keys
+
+const commentKeys = {
+  list: (postId: number) => ['posts', postId, 'comments'] as const,
+  post: (postId: number) => ['posts', postId] as const,
+};
+
+// Hooks
+
+// Fetches paginated comments for a post using infinite scroll
+export function useComments(postId: number) {
+  return useInfiniteQuery({
+    queryKey: commentKeys.list(postId),
+    queryFn: async ({ pageParam = 1 }) => {
+      const res = await commentsApi.getComments(postId, pageParam as number);
+      return res.data.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: CommentsPage) => {
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    },
+    enabled: !!postId,
+  });
 }
 
-interface RawComment {
-  id: number;
-  text: string;
-  createdAt: string;
-  author: Comment["author"];
-}
+/**
+ * Adds a comment to a post with optimistic update.
+ * Reverts on error and invalidates cache on settle.
+ */
+export function useAddComment(postId: number, currentUser: Comment['author']) {
+  const queryClient = useQueryClient();
 
-interface CommentsResponse {
-  data?: {
-    comments?: RawComment[];
-    pagination?: { total: number };
-  } | RawComment[];
-}
+  return useMutation({
+    mutationFn: (text: string) => commentsApi.addComment(postId, text),
 
-export function useComments(postId: number | string) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
-  const fetchComments = useCallback(async (p = 1, replace = false) => {
-    setIsLoading(true);
-    try {
-      const res = await api.get<CommentsResponse>(`/posts/${postId}/comments`, {
-        params: { page: p, limit: 10 },
-      });
-
-      const raw: RawComment[] = (res.data.data as { comments?: RawComment[] })?.comments
-        ?? (res.data.data as RawComment[])
-        ?? [];
-      const total: number = (res.data.data as { pagination?: { total: number } })?.pagination?.total ?? raw.length;
-
-      const data: Comment[] = raw.map((c) => ({
-        id:        c.id,
-        content:   c.text,
-        createdAt: c.createdAt,
-        author:    c.author,
-      }));
-
-      setComments((prev) => replace ? data : [...prev, ...data]);
-      setHasMore((replace ? data.length : comments.length + data.length) < total);
-      setPage(p);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [postId, comments.length]);
-
-  useEffect(() => {
-    fetchComments(1, true);
-  }, [postId]);
-
-  const loadMore = () => {
-    if (!isLoading && hasMore) fetchComments(page + 1);
-  };
-
-  const addComment = useCallback(async (content: string) => {
-    if (!content.trim() || isSending) return;
-    setIsSending(true);
-    try {
-      const res = await api.post<{ data?: RawComment } & RawComment>(
-        `/posts/${postId}/comments`,
-        { text: content }
+    onMutate: async (text: string) => {
+      await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+      const previous = queryClient.getQueryData<CommentsCache>(
+        commentKeys.list(postId),
       );
-      const d = res.data.data ?? res.data;
-      const newComment: Comment = {
-        id:        d.id,
-        content:   d.text ?? content,
-        createdAt: d.createdAt ?? new Date().toISOString(),
-        author:    d.author,
+
+      const optimistic: Comment = {
+        id: Date.now(),
+        text,
+        createdAt: new Date().toISOString(),
+        postId,
+        author: currentUser,
       };
-      setComments((prev) => [newComment, ...prev]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSending(false);
-    }
-  }, [postId, isSending]);
 
-  const deleteComment = useCallback(async (commentId: number) => {
-    try {
-      await api.delete(`/comments/${commentId}`);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+      queryClient.setQueryData<CommentsCache>(
+        commentKeys.list(postId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page, i) =>
+              i === 0
+                ? { ...page, comments: [optimistic, ...page.comments] }
+                : page,
+            ),
+          };
+        },
+      );
 
-  return { comments, isLoading, isSending, hasMore, loadMore, addComment, deleteComment };
+      queryClient.setQueryData<{ commentCount: number }>(
+        commentKeys.post(postId),
+        (old) =>
+          old ? { ...old, commentCount: (old.commentCount ?? 0) + 1 } : old,
+      );
+
+      return { previous };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(commentKeys.list(postId), context.previous);
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
+      queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
+    },
+  });
+}
+
+/**
+ * Deletes a comment with optimistic update.
+ * Reverts on error and invalidates cache on settle.
+ */
+export function useDeleteComment(postId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: number) => commentsApi.deleteComment(commentId),
+
+    onMutate: async (commentId: number) => {
+      await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+      const previous = queryClient.getQueryData<CommentsCache>(
+        commentKeys.list(postId),
+      );
+
+      queryClient.setQueryData<CommentsCache>(
+        commentKeys.list(postId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              comments: page.comments.filter((c) => c.id !== commentId),
+            })),
+          };
+        },
+      );
+
+      queryClient.setQueryData<{ commentCount: number }>(
+        commentKeys.post(postId),
+        (old) =>
+          old
+            ? { ...old, commentCount: Math.max((old.commentCount ?? 1) - 1, 0) }
+            : old,
+      );
+
+      return { previous };
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(commentKeys.list(postId), context.previous);
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
+      queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
+    },
+  });
 }
