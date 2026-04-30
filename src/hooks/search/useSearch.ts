@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { User } from '@/types/user';
 import { usersApi } from '@/lib/api/users';
+import { UserProfile } from '@/types/user';
 
 /**
  * Handles user search with debouncing.
@@ -8,7 +8,7 @@ import { usersApi } from '@/lib/api/users';
  */
 export function useSearch() {
   const [query, setQuery] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
