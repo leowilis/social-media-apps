@@ -1,27 +1,11 @@
-import api from '@/lib/axios';
+import { api } from '@/lib/axios';
 import type { AuthUser } from '@/types/auth';
-
-// Request Payloads
-
-// Payload for creating a new user account
-export interface RegisterPayload {
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-// Payload for authenticating an existing user
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
+import type { LoginFormData, RegisterFormData } from '@/schema/auth.scema';
 
 // Response Shapes
 
-/** Response returned by the login endpoint. */
-export interface LoginResponse {
+// Shared auth response shape returned by login and register endpoints
+export interface AuthResponse {
   success: boolean;
   message: string;
   data: {
@@ -32,12 +16,13 @@ export interface LoginResponse {
 
 // API Endpoints
 
-// Auth API — wraps all authentication-related endpoints
+// Auth API — wraps authentication-related endpoints (register, login)
 export const authApi = {
-  // Registers a new user account
-  register: (data: RegisterPayload) => api.post('/api/auth/register', data),
+  /** Registers a new user account and returns a token + user. */
+  register: (data: Omit<RegisterFormData, 'confirmPassword'>) =>
+    api.post<AuthResponse>('/auth/register', data),
 
-  // Authenticates a user and returns a JWT token
-  login: (data: LoginPayload) =>
-    api.post<LoginResponse>('/api/auth/login', data),
+  /** Authenticates an existing user and returns a token + user. */
+  login: (data: LoginFormData) =>
+    api.post<AuthResponse>('/auth/login', data),
 };
