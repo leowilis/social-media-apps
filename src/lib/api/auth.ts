@@ -1,6 +1,7 @@
 import { api } from '@/lib/axios';
 import type { AuthUser } from '@/types/auth';
 import type { LoginFormData, RegisterFormData } from '@/schema/auth.scema';
+export type { LoginFormData, RegisterFormData } from '@/schema/auth.scema';
 
 // Response Shapes
 
@@ -23,6 +24,5 @@ export const authApi = {
     api.post<AuthResponse>('/auth/register', data),
 
   /** Authenticates an existing user and returns a token + user. */
-  login: (data: LoginFormData) =>
-    api.post<AuthResponse>('/auth/login', data),
+  login: (data: LoginFormData) => api.post<AuthResponse>('/auth/login', data),
 };
