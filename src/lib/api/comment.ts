@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios';
 import type { PaginationMeta } from '@/types/pagination';
-import { User } from '@/types/user';
+import type { User } from '@/types/user';
 
 // Types
 export interface Comment {
