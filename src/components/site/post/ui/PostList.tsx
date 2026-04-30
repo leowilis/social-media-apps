@@ -1,12 +1,42 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { usePosts } from '@/hooks/post/usePosts';
+import { useExplorePosts } from '@/hooks/post/usePosts';
+import { useMe } from '@/hooks/profile/useMe';
 import { PostCard } from './PostCard';
-import { useMe } from '@/hooks/header/useMe';
+import { PostCardSkeleton } from '@/components/ui/skeletons';
 
+// Empty State
+
+function EmptyState() {
+  return (
+    <div className='flex flex-col items-center justify-center py-24 gap-2 text-center'>
+      <p className='text-sm font-bold text-neutral-300'>No posts yet</p>
+      <p className='text-xs text-neutral-600'>
+        Follow someone to see their posts here
+      </p>
+    </div>
+  );
+}
+
+// Error State
+
+function ErrorState() {
+  return (
+    <div className='flex items-center justify-center py-20 text-neutral-500 text-sm'>
+      Failed to load posts. Please try again.
+    </div>
+  );
+}
+
+// Component
+
+/**
+ * Renders an infinite-scrolling list of posts for the feed.
+ * Handles loading, empty, and error states.
+ */
 export function PostList() {
-  const { posts, isLoading, isError, hasMore, loadMore } = usePosts();
+  const { posts, isLoading, isError, hasMore, loadMore } = useExplorePosts();
   const { me } = useMe();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -17,19 +47,25 @@ export function PostList() {
           loadMore();
         }
       },
-      { threshold: 1 },
+      { threshold: 0.5 },
     );
     if (bottomRef.current) observer.observe(bottomRef.current);
     return () => observer.disconnect();
   }, [hasMore, isLoading, loadMore]);
 
-  if (isError) {
+  if (isError) return <ErrorState />;
+
+  if (isLoading && posts.length === 0) {
     return (
-      <div className='flex items-center justify-center py-20 text-[var(--neutral-500)] text-sm'>
-        Failed to load posts.
+      <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
+        {[1, 2, 3].map((i) => (
+          <PostCardSkeleton key={i} />
+        ))}
       </div>
     );
   }
+
+  if (!isLoading && posts.length === 0) return <EmptyState />;
 
   return (
     <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
@@ -46,7 +82,7 @@ export function PostList() {
       )}
 
       {!hasMore && posts.length > 0 && (
-        <p className='text-center text-xs text-[var(--neutral-500)] py-6'>
+        <p className='text-center text-xs text-neutral-500 py-6'>
           No more posts
         </p>
       )}
