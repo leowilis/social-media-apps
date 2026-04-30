@@ -9,14 +9,14 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { MeData } from '@/hooks/profile/useMe';
+import type { User } from '@/types/user';
 
 // Types
 
 interface SidebarMenuProps {
+  me: User | undefined;
   open: boolean;
   onClose: () => void;
-  me: MeData | undefined;
   onLogout: () => void;
 }
 
