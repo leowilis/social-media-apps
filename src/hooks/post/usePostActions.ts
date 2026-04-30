@@ -122,3 +122,17 @@ export function usePostActions({
     handleDeletePost,
   };
 }
+
+export function useCreatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { image: File; caption?: string }) =>
+      postsApi.createPost(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: postKeys.feed });
+      queryClient.invalidateQueries({ queryKey: postKeys.me });
+      queryClient.invalidateQueries({ queryKey: postKeys.explore });
+    },
+  });
+}
