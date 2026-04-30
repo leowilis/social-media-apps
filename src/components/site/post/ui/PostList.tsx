@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useExplorePosts } from '@/hooks/post/usePosts';
+import { useFeedPosts } from '@/hooks/post/useFeedPosts';
 import { useMe } from '@/hooks/profile/useMe';
 import { PostCard } from './PostCard';
 import { PostCardSkeleton } from '@/components/ui/skeletons';
@@ -36,7 +36,7 @@ function ErrorState() {
  * Handles loading, empty, and error states.
  */
 export function PostList() {
-  const { posts, isLoading, isError, hasMore, loadMore } = useExplorePosts();
+  const { posts, isLoading, isError, hasMore, loadMore } = useFeedPosts();
   const { me } = useMe();
   const bottomRef = useRef<HTMLDivElement>(null);
 
