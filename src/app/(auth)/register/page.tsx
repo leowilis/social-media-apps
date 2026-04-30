@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 
-import { registerSchema, type RegisterFormData } from '@/lib/api/auth';
+import { registerSchema, type RegisterFormData } from '@/schema/auth.scema';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 import Logo from '@/public/assets/logo/Logo.svg';
@@ -228,7 +228,14 @@ export default function RegisterPage() {
               variant='ghost'
               className='text-md flex h-11 md:h-12 items-center justify-center rounded-full bg-primary-300 font-bold text-base-pure-white hover:bg-primary-200 hover:text-base-pure-white transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60'
             >
-              {isRegistering ? 'Loading...' : 'Submit'}
+              {isRegistering ? (
+                <span className='flex items-center gap-2'>
+                  <span className='size-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
+                  Loading...
+                </span>
+              ) : (
+                'Register'
+              )}
             </Button>
           </form>
 
