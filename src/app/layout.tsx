@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import './globals.css';
-import { Providers } from './provider';
+import ProviderContainer from "@/app/provider/index"
 
 /**
  * Local SF Pro font configuration.
@@ -45,7 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang='en'>
       <body className={`${sfPro.variable} antialiased`}>
-        <Providers>{children}</Providers>
+        <ProviderContainer>{children}</ProviderContainer>
       </body>
     </html>
   );
