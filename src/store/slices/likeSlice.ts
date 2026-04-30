@@ -22,7 +22,7 @@ function loadFromStorage(): number[] {
   }
 }
 
-// Saves the list of liked post IDs to localStorage. Fails silently if unavailable.
+// Persists liked post IDs to localStorage
 function saveToStorage(ids: number[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
