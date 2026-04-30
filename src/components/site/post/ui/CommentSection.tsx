@@ -10,7 +10,15 @@ import {
   IoTrashOutline,
 } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useComments, Comment } from '@/hooks/post/useComments';
+import {
+  useComments,
+  useAddComment,
+  useDeleteComment,
+} from '@/hooks/post/useComments';
+import { useMe } from '@/hooks/profile/useMe';
+import type { Comment } from '@/lib/api/comment';
+
+// Constants
 
 const EMOJIS = [
   '😀',
@@ -45,6 +53,8 @@ const EMOJIS = [
   '🫶',
 ];
 
+// Helpers
+
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return `${diff}s`;
@@ -53,6 +63,8 @@ function timeAgo(dateStr: string): string {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
   return `${Math.floor(diff / 604800)}w`;
 }
+
+// Comment Item
 
 function CommentItem({
   comment,
@@ -102,7 +114,7 @@ function CommentItem({
             </span>
           </div>
           <p className='text-sm text-neutral-200 leading-relaxed break-words'>
-            {comment.content}
+            {comment.text}
           </p>
         </div>
       </div>
@@ -150,7 +162,9 @@ function CommentItem({
   );
 }
 
-interface Props {
+// Props
+
+interface CommentSectionProps {
   postId: number | string;
   currentUserId?: number;
   onClose?: () => void;
@@ -160,6 +174,13 @@ interface Props {
   onDeleteRequest?: (commentId: number) => void;
 }
 
+// Component
+
+/**
+ * Full comment section with infinite scroll, optimistic add/delete,
+ * emoji picker, and owner-only delete action.
+ * Supports both inline and bottom-sheet modes.
+ */
 export function CommentSection({
   postId,
   currentUserId,
@@ -168,16 +189,19 @@ export function CommentSection({
   onCommentAdded,
   onCommentDeleted,
   onDeleteRequest,
-}: Props) {
-  const {
-    comments,
-    isLoading,
-    isSending,
-    hasMore,
-    loadMore,
-    addComment,
-    deleteComment,
-  } = useComments(postId);
+}: CommentSectionProps) {
+  const numericPostId = Number(postId);
+  const { me } = useMe();
+
+  const commentsQuery = useComments(numericPostId);
+  const addMutation = useAddComment(numericPostId, me as Comment['author']);
+  const deleteMutation = useDeleteComment(numericPostId);
+
+  const comments = commentsQuery.data?.pages.flatMap((p) => p.comments) ?? [];
+  const isLoading = commentsQuery.isLoading;
+  const hasMore = commentsQuery.hasNextPage;
+  const isSending = addMutation.isPending;
+
   const [text, setText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -186,23 +210,23 @@ export function CommentSection({
     inputRef.current?.focus();
   }, []);
 
+  // Listen for external delete requests (e.g. from PostCard delete dialog)
   useEffect(() => {
     const handler = (e: Event) => {
       const id = (e as CustomEvent<number>).detail;
-      deleteComment(id);
+      deleteMutation.mutate(id);
       onCommentDeleted?.();
     };
     window.addEventListener('confirm-delete-comment', handler);
     return () => window.removeEventListener('confirm-delete-comment', handler);
-  }, [deleteComment, onCommentDeleted]);
+  }, [deleteMutation, onCommentDeleted]);
 
   const insertEmoji = (emoji: string) => {
     const input = inputRef.current;
     if (input) {
       const start = input.selectionStart ?? text.length;
       const end = input.selectionEnd ?? text.length;
-      const newText = text.slice(0, start) + emoji + text.slice(end);
-      setText(newText);
+      setText(text.slice(0, start) + emoji + text.slice(end));
       setTimeout(() => {
         input.focus();
         input.setSelectionRange(start + emoji.length, start + emoji.length);
@@ -214,14 +238,19 @@ export function CommentSection({
 
   const handleSend = () => {
     if (!text.trim()) return;
-    addComment(text.trim());
+    addMutation.mutate(text.trim());
     setText('');
     setShowEmoji(false);
     onCommentAdded?.();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSend();
+  const handleDelete = (id: number) => {
+    if (onDeleteRequest) {
+      onDeleteRequest(id);
+    } else {
+      deleteMutation.mutate(id);
+      onCommentDeleted?.();
+    }
   };
 
   const content = (
@@ -231,7 +260,7 @@ export function CommentSection({
         background: 'linear-gradient(180deg, #0d0d18 0%, #080810 100%)',
       }}
     >
-      {/* Handle bar */}
+      {/* Handle bar — mobile only */}
       <div className='flex justify-center pt-3 pb-1 shrink-0 md:hidden'>
         <div className='w-10 h-1 rounded-full bg-white/10' />
       </div>
@@ -287,19 +316,12 @@ export function CommentSection({
                 key={comment.id}
                 comment={comment}
                 currentUserId={currentUserId}
-                onDelete={(id) => {
-                  if (onDeleteRequest) {
-                    onDeleteRequest(id);
-                  } else {
-                    deleteComment(id);
-                    onCommentDeleted?.();
-                  }
-                }}
+                onDelete={handleDelete}
               />
             ))}
             {hasMore && (
               <button
-                onClick={loadMore}
+                onClick={() => commentsQuery.fetchNextPage()}
                 disabled={isLoading}
                 className='w-full text-xs text-[#a78bff] py-2 hover:underline transition-opacity disabled:opacity-50'
               >
@@ -352,12 +374,12 @@ export function CommentSection({
           <IoHappyOutline className='size-5' />
         </button>
 
-        <div className='flex-1 relative'>
+        <div className='flex-1'>
           <input
             ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder='Write a comment...'
             className='w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none transition-all'
             style={{
