@@ -11,7 +11,7 @@ export function useUserProfile(username: string) {
     queryKey: userKeys.profile(username),
     queryFn: async () => {
       const res = await usersApi.getUserProfile(username);
-      return res.data?.data ?? res.data;
+      return res.data.data;
     },
     enabled: !!username,
     staleTime: 1000 * 60 * 2, // 2 minutes
