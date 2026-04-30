@@ -1,3 +1,5 @@
+import { User } from "./user";
+
 // Author information embedded in each post
 export interface PostAuthor {
   id: number;
@@ -12,7 +14,7 @@ export interface Post {
   imageUrl: string;
   caption?: string | null;
   createdAt: string;
-  author: PostAuthor;
+  author: User;
   likeCount: number;
   commentCount: number;
   likedByMe?: boolean;
