@@ -8,7 +8,7 @@ import {
 import { savesApi } from '@/lib/api/saves';
 import { addSave, removeSave } from '@/store/slices/saveSlice';
 import { useAppDispatch } from '@/store/hooks';
-import { meKeys } from '@/hooks/profile/useMe';
+import { meKeys } from '@/hooks/profile/key';
 import { postKeys } from '@/hooks/post/usePosts';
 import type { Post } from '@/types/post';
 import type { FeedResponse } from '@/lib/api/feed';
