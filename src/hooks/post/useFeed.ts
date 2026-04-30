@@ -1,8 +1,9 @@
 'use client';
 
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
-import { feedApi, FeedResponse } from '@/lib/api/feed';
+import { feedApi, type FeedResponse } from '@/lib/api/feed';
 import { useAppSelector } from '@/store/hooks';
+import { postKeys } from '@/hooks/post/key';
 
 // Types
 
@@ -16,19 +17,26 @@ type FeedCache = InfiniteData<FeedPage>;
  * Only runs when the user is authenticated.
  */
 export function useFeed() {
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const isLoggedIn = useAppSelector((s) => s.auth.isAuthenticated);
 
-  return useInfiniteQuery<FeedPage, Error, FeedCache>({
-    queryKey: ['feed'],
-    queryFn: async ({ pageParam = 1 }) => {
-      const res = await feedApi.getFeed(pageParam as number);
-      return res.data.data;
-    },
+  const query = useInfiniteQuery<FeedPage, Error, FeedCache>({
+    queryKey: postKeys.feed,
+    queryFn: ({ pageParam = 1 }) =>
+      feedApi.getFeed(pageParam as number).then((r) => r.data.data),
     initialPageParam: 1,
-    enabled: isAuthenticated,
-    getNextPageParam: (lastPage: FeedPage) => {
+    enabled: isLoggedIn,
+    getNextPageParam: (lastPage) => {
       const { page, totalPages } = lastPage.pagination;
       return page < totalPages ? page + 1 : undefined;
     },
   });
+
+  return {
+    posts: query.data?.pages.flatMap((p) => p.posts) ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    hasMore: query.hasNextPage,
+    loadMore: query.fetchNextPage,
+    isFetchingMore: query.isFetchingNextPage,
+  };
 }
