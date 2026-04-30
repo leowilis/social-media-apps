@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
-import { api } from '@/lib/axios';
 import { User } from '@/types/user';
+import { usersApi } from '@/lib/api/users';
 
 /**
  * Handles user search with debouncing.
@@ -22,10 +22,8 @@ export function useSearch() {
     setIsLoading(true);
     setSearched(true);
     try {
-      const res = await api.get('/users/search', {
-        params: { q, page: 1, limit: 20 },
-      });
-      setUsers(res.data.data?.users ?? []);
+      const res = await usersApi.searchUsers(q);
+      setUsers(res.data.data.users);
     } catch {
       setUsers([]);
     } finally {
