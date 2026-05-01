@@ -34,7 +34,7 @@ export function useMe() {
     queryKey: meKeys.me,
     queryFn: async () => {
       const res = await meApi.getMe();
-      return res.data.data;
+      return res.data.data.profile;
     },
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
