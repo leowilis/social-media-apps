@@ -30,7 +30,7 @@ function updateFeedPages(
     ...old,
     pages: old.pages.map((page) => ({
       ...page,
-      posts: page.posts.map((p) => (p.id === postId ? updater(p) : p)),
+      items: page.items.map((p) => (p.id === postId ? updater(p) : p)),
     })),
   };
 }
