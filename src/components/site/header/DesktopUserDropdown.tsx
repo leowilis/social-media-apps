@@ -103,7 +103,7 @@ export function DesktopUserDropdown({
             <div className='px-2 py-2'>
               {DROPDOWN_ITEMS.map(({ href, label, icon: Icon }) => (
                 <Link
-                  key={href}
+                  key={label}
                   role='menuitem'
                   href={href}
                   onClick={onClose}
