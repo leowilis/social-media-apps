@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { likesApi } from '@/lib/api/likes';
@@ -44,6 +44,14 @@ export function usePostActions({
   const [saved, setSaved] = useState(initialSaved);
   const [toast, setToast] = useState<ToastState>({ message: '', show: false });
 
+  // Sync local state when server data updates (e.g. from refetchInterval)
+  useEffect(() => {
+    setLikeCount(initialLikeCount);
+  }, [initialLikeCount]);
+  useEffect(() => {
+    setSaved(initialSaved);
+  }, [initialSaved]);
+
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true });
     setTimeout(() => setToast((t) => ({ ...t, show: false })), 2500);
@@ -54,20 +62,22 @@ export function usePostActions({
   const likeMutation = useMutation({
     mutationFn: (wasLiked: boolean) =>
       wasLiked ? likesApi.unlikePost(postId) : likesApi.likePost(postId),
+
     onMutate: (wasLiked) => {
       setLiked(!wasLiked);
       setLikeCount((c) => (wasLiked ? c - 1 : c + 1));
     },
+
     onError: (_err, wasLiked) => {
       setLiked(wasLiked);
       setLikeCount((c) => (wasLiked ? c + 1 : c - 1));
     },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) });
       queryClient.invalidateQueries({ queryKey: postKeys.feed });
     },
   });
-
   // Save
 
   const saveMutation = useMutation({
