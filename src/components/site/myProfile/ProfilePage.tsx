@@ -2,13 +2,15 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   IoBookmarkOutline,
+  IoBookmark,
   IoGridOutline,
   IoPaperPlaneOutline,
   IoHeartOutline,
   IoHeart,
+  IoChatbubbleOutline,
   IoCloseOutline,
 } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -62,27 +64,9 @@ function GridItem({
   isSaved?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likeCount ?? 0);
-  const [liked, setLiked] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(`post_like_${post.id}`);
-    if (stored) {
-      try {
-        const { liked: l, likeCount: c } = JSON.parse(stored);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLiked(Boolean(l));
-        setLikeCount(Number(c));
-      } catch {}
-    } else {
-      setLikeCount(post.likeCount ?? 0);
-    }
-  }, [post.id, post.likeCount]);
 
   return (
-    <Link
-      href={`/post/${post.id}?liked=${liked}&likeCount=${likeCount}&saved=${isSaved}`}
-    >
+    <Link href={`/post/${post.id}`}>
       <div
         className='relative aspect-square w-full overflow-hidden'
         onMouseEnter={() => setHovered(true)}
@@ -96,16 +80,30 @@ function GridItem({
           sizes='33vw'
         />
         <div
-          className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-4 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
         >
+          {/* Like count */}
           <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
-            {liked ? (
+            {post.likedByMe ? (
               <IoHeart className='size-4 text-red-500' />
             ) : (
-              <IoHeartOutline className='size-4 fill-white text-white' />
+              <IoHeartOutline className='size-4 text-white' />
             )}
-            {likeCount}
+            {post.likeCount ?? 0}
           </span>
+
+          {/* Comment count */}
+          <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
+            <IoChatbubbleOutline className='size-4 text-white' />
+            {post.commentCount ?? 0}
+          </span>
+
+          {/* Save indicator */}
+          {isSaved && (
+            <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
+              <IoBookmark className='size-4 text-white' />
+            </span>
+          )}
         </div>
       </div>
     </Link>
@@ -140,7 +138,6 @@ function FollowModal({
             <IoCloseOutline className='size-6' />
           </button>
         </div>
-
         <div className='overflow-y-auto flex-1'>
           {loading ? (
             <div className='flex justify-center py-8'>
@@ -178,7 +175,7 @@ function FollowModal({
 // Profile Page
 
 /**
- * Reusable profile page layout used for both self and other user profiles.
+ * Reusable profile page layout for both self and other user profiles.
  * Handles gallery/saved tab switching, follow modal, and stats display.
  */
 export function ProfilePage({
