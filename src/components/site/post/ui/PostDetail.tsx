@@ -6,9 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { IoArrowBack, IoCloseOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
 import { usePostDetail } from '@/hooks/post/usePostDetail';
-import type { Post } from '@/types/post';
 import { usePostActions } from '@/hooks/post/usePostActions';
 import { PostToast } from '@/components/site/post/ui/PostToast';
 import { DeleteDialog } from '@/components/site/post/ui/DeleteDialog';
@@ -16,6 +14,9 @@ import { PostMenuButton } from '@/components/site/post/ui/PostMenuButton';
 import { PostActionsBar } from '@/components/site/post/ui/PostActionBar';
 import { CommentSection } from '@/components/site/post/ui/CommentSection';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
+import type { Post } from '@/types/post';
+
+// Helpers
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -26,14 +27,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(diff / 604800)}w ago`;
 }
 
-interface PostDetailProps {
-  postId: number;
-  currentUserId?: number;
-  initialLiked?: boolean;
-  initialLikeCount?: number;
-  initialSaved?: boolean;
-  onClose?: () => void;
-}
+// Sub Components
 
 function PostDetailSkeleton() {
   return (
@@ -77,16 +71,28 @@ function AuthorHeader({ post }: { post: Post }) {
   );
 }
 
-export function PostDetail({
+// Props
+
+interface PostDetailProps {
+  postId: number;
+  currentUserId?: number;
+  onClose?: () => void;
+}
+
+// Inner Component (renders after post data is available)
+
+function PostDetailContent({
+  post,
   postId,
   currentUserId,
-  initialLiked = false,
-  initialLikeCount = 0,
-  initialSaved = false,
   onClose,
-}: PostDetailProps) {
+}: {
+  post: Post;
+  postId: number;
+  currentUserId?: number;
+  onClose?: () => void;
+}) {
   const router = useRouter();
-  const { post, isLoading, isError } = usePostDetail(postId);
 
   const {
     liked,
@@ -101,9 +107,9 @@ export function PostDetail({
     handleDeletePost,
   } = usePostActions({
     postId,
-    initialLiked: post ? Boolean(post.likedByMe) : initialLiked,
-    initialLikeCount: post ? post.likeCount : initialLikeCount,
-    initialSaved: post ? Boolean(post.savedByMe) : initialSaved,
+    initialLiked: Boolean(post.likedByMe),
+    initialLikeCount: post.likeCount,
+    initialSaved: Boolean(post.savedByMe),
   });
 
   const [commentCount, setCommentCount] = useState(0);
@@ -113,10 +119,6 @@ export function PostDetail({
   const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null);
 
   const handleClose = () => (onClose ? onClose() : router.back());
-
-  if (isLoading) return <PostDetailSkeleton />;
-  if (isError || !post) return <PostDetailError />;
-
   const isOwner =
     currentUserId !== undefined && post.author.id === currentUserId;
 
@@ -297,5 +299,31 @@ export function PostDetail({
         </div>
       </div>
     </>
+  );
+}
+
+// Main Component
+
+/**
+ * Post detail page — fetches post data then renders PostDetailContent.
+ * Separating fetch from render ensures usePostActions gets correct initial values.
+ */
+export function PostDetail({
+  postId,
+  currentUserId,
+  onClose,
+}: PostDetailProps) {
+  const { post, isLoading, isError } = usePostDetail(postId);
+
+  if (isLoading) return <PostDetailSkeleton />;
+  if (isError || !post) return <PostDetailError />;
+
+  return (
+    <PostDetailContent
+      post={post}
+      postId={postId}
+      currentUserId={currentUserId}
+      onClose={onClose}
+    />
   );
 }
