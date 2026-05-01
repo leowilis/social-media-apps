@@ -55,7 +55,7 @@ export function PostList() {
 
   if (isError) return <ErrorState />;
 
-  if (isLoading && posts.length === 0) {
+  if (isLoading) {
     return (
       <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
         {[1, 2, 3].map((i) => (
