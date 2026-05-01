@@ -32,7 +32,7 @@ export function useFeed() {
   });
 
   return {
-    posts: query.data?.pages.flatMap((p) => p.posts) ?? [],
+    posts: query.data?.pages.flatMap((p) => p.items) ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     hasMore: query.hasNextPage,

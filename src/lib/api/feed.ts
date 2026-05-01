@@ -9,7 +9,7 @@ export interface FeedResponse {
   success: boolean;
   message: string;
   data: {
-    posts: Post[];
+    items: Post[];
     pagination: PaginationMeta;
   };
 }
