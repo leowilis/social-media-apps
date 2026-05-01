@@ -9,7 +9,7 @@ const fetchMyPosts = async (): Promise<Post[]> => {
 
 const fetchMySavedPosts = async (): Promise<Post[]> => {
   const res = await api.get('/me/saved');
-  return res.data.data?.items ?? res.data.data ?? [];
+  return res.data.data?.posts ?? res.data.data ?? [];
 };
 
 /**
