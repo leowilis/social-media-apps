@@ -21,9 +21,16 @@ export interface UpdateProfilePayload {
 export interface MeResponse {
   success: boolean;
   message: string;
-  data: AuthUser;
+  data: {
+    profile: AuthUser;
+    stats: {
+      posts: number;
+      followers: number;
+      following: number;
+      likes: number;
+    };
+  };
 }
-
 // Response returned by paginated /me/* endpoints
 export interface MeListResponse<T> {
   success: boolean;
