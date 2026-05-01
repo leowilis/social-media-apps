@@ -19,7 +19,8 @@ type FeedCache = InfiniteData<FeedPage>;
 
 const fetchFeed = async (page: number): Promise<FeedPage> => {
   const res = await api.get('/feed', { params: { page, limit: 10 } });
-  return res.data.data;
+  const { items, pagination } = res.data.data;
+  return { posts: items, pagination }; 
 };
 
 // Hook
