@@ -44,13 +44,13 @@ export function usePostActions({
   const [saved, setSaved] = useState(initialSaved);
   const [toast, setToast] = useState<ToastState>({ message: '', show: false });
 
-  // Shows a toast notification for 2.5 seconds
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true });
     setTimeout(() => setToast((t) => ({ ...t, show: false })), 2500);
   }, []);
 
-  // Like / Unlike with optimistic update and cache invalidation on settle
+  // Like
+
   const likeMutation = useMutation({
     mutationFn: (wasLiked: boolean) =>
       wasLiked ? likesApi.unlikePost(postId) : likesApi.likePost(postId),
@@ -68,7 +68,8 @@ export function usePostActions({
     },
   });
 
-  // Save / Unsave with optimistic update and cache invalidation on settle
+  // Save
+
   const saveMutation = useMutation({
     mutationFn: (wasSaved: boolean) =>
       wasSaved ? savesApi.unsavePost(postId) : savesApi.savePost(postId),
@@ -84,7 +85,8 @@ export function usePostActions({
     },
   });
 
-  // Delete post with cache invalidation and navigation on success
+  // Delete
+
   const deleteMutation = useMutation({
     mutationFn: () => postsApi.deletePost(postId),
     onSuccess: () => {
@@ -94,7 +96,8 @@ export function usePostActions({
     },
   });
 
-  // Handlers with guards to prevent multiple rapid clicks while mutation is pending
+  // Handlers
+
   const handleLike = useCallback(() => {
     if (likeMutation.isPending) return;
     likeMutation.mutate(liked);
@@ -121,18 +124,4 @@ export function usePostActions({
     handleSave,
     handleDeletePost,
   };
-}
-
-export function useCreatePost() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: { image: File; caption?: string }) =>
-      postsApi.createPost(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: postKeys.feed });
-      queryClient.invalidateQueries({ queryKey: postKeys.me });
-      queryClient.invalidateQueries({ queryKey: postKeys.explore });
-    },
-  });
 }
