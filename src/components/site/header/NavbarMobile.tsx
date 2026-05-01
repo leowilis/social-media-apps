@@ -14,11 +14,11 @@ import {
 } from 'react-icons/io5';
 
 import Logo from '@/public/assets/logo/Logo.svg';
-import type { User } from '@/types/user';
+import { AuthUser } from '@/types/auth';
 
 interface NavbarMobileProps {
   isLoggedIn: boolean;
-  me?: User | null;
+  me?: AuthUser | null;
 
   isProfileRoute: boolean;
   headerTitle: string;
@@ -86,14 +86,14 @@ export function NavbarMobile({
           </div>
         ) : (
           <>
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-2'>
               <Image src={Logo} alt='logo' width={30} height={30} />
-              <span className='text-xl font-bold'>Sociality</span>
+              <span className='text-2xl font-bold'>Sociality</span>
             </div>
 
             <div className='flex items-center gap-3'>
               <button onClick={() => setShowSearch(true)}>
-                <IoSearchOutline />
+                <IoSearchOutline className='size-6' />
               </button>
 
               {isLoggedIn ? (
@@ -103,7 +103,11 @@ export function NavbarMobile({
                 </Avatar>
               ) : (
                 <button onClick={() => setMenuOpen(!menuOpen)}>
-                  {menuOpen ? <IoCloseOutline /> : <IoMenuOutline />}
+                  {menuOpen ? (
+                    <IoCloseOutline className='size-7' />
+                  ) : (
+                    <IoMenuOutline className='size-8' />
+                  )}
                 </button>
               )}
             </div>
@@ -114,10 +118,14 @@ export function NavbarMobile({
       {!isLoggedIn && menuOpen && (
         <div className='flex gap-4 p-4 md:hidden'>
           <Link href='/login' className='flex-1'>
-            <Button className='w-full'>Login</Button>
+            <Button className='w-full rounded-full bg-transparent border border-neutral-900'>
+              Login
+            </Button>
           </Link>
           <Link href='/register' className='flex-1'>
-            <Button className='w-full'>Register</Button>
+            <Button className='w-full rounded-full bg-primary-300'>
+              Register
+            </Button>
           </Link>
         </div>
       )}
