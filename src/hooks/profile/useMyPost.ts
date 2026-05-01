@@ -20,7 +20,8 @@ export function useMyPosts(tab: 'gallery' | 'saved') {
   const query = useQuery({
     queryKey: ['me', tab],
     queryFn: tab === 'gallery' ? fetchMyPosts : fetchMySavedPosts,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   return {

@@ -39,7 +39,8 @@ export function useMyProfile() {
   const query = useQuery({
     queryKey: ['me', 'profile'],
     queryFn: fetchMyProfile,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   return {
