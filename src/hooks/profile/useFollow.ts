@@ -5,7 +5,7 @@ import { followApi } from '@/lib/api/follow';
 import type { UserProfile } from '@/types/user';
 
 // Query Keys
-
+// Centralizing Query Keys is great for maintainability
 const followKeys = {
   profile: (username: string) => ['users', username] as const,
   followers: (username: string) => ['users', username, 'followers'] as const,
@@ -23,6 +23,7 @@ export function useUserFollowers(username: string) {
       return res.data.data.users;
     },
     enabled: !!username,
+    staleTime: 1000 * 60 * 5, // Cache for 5 mins to reduce redundant hits
   });
 }
 
@@ -35,6 +36,7 @@ export function useUserFollowing(username: string) {
       return res.data.data.users;
     },
     enabled: !!username,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -46,8 +48,13 @@ export function useToggleFollow(username: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (isFollowing: boolean) =>
-      isFollowing ? followApi.unfollow(username) : followApi.follow(username),
+    // Explicitly using async/await for better debugging & control
+    mutationFn: async (isFollowing: boolean) => {
+      const res = isFollowing 
+        ? await followApi.unfollow(username) 
+        : await followApi.follow(username);
+      return res.data;
+},
 
     onMutate: async (isFollowing: boolean) => {
       await queryClient.cancelQueries({
@@ -60,15 +67,15 @@ export function useToggleFollow(username: string) {
       queryClient.setQueryData<UserProfile>(
         followKeys.profile(username),
         (old) => {
-          if (!old) return old;
+          if (!old) return undefined;
           return {
             ...old,
             isFollowedByMe: !isFollowing,
             counts: {
               ...old.counts,
               followers: isFollowing
-                ? Math.max(0, old.counts.followers - 1)
-                : old.counts.followers + 1,
+                ? Math.max(0, (old.counts?.followers || 0) - 1)
+                : (old.counts?.followers || 0) + 1,
             },
           };
         },
@@ -77,7 +84,7 @@ export function useToggleFollow(username: string) {
       return { previous };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
           followKeys.profile(username),
@@ -86,6 +93,7 @@ export function useToggleFollow(username: string) {
       }
     },
 
+    // // Always refetch after error or success to ensure server sync
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: followKeys.profile(username) });
       queryClient.invalidateQueries({ queryKey: ['me'] });
