@@ -66,7 +66,9 @@ function GridItem({
   const [hovered, setHovered] = useState(false);
 
   return (
-    <Link href={`/post/${post.id}`}>
+    <Link
+      href={`/post/${post.id}?liked=${post.likedByMe}&likeCount=${post.likeCount}&saved=${isSaved}`}
+    >
       <div
         className='relative aspect-square w-full overflow-hidden'
         onMouseEnter={() => setHovered(true)}
@@ -82,22 +84,6 @@ function GridItem({
         <div
           className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-4 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
         >
-          {/* Like count */}
-          <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
-            {post.likedByMe ? (
-              <IoHeart className='size-4 text-red-500' />
-            ) : (
-              <IoHeartOutline className='size-4 text-white' />
-            )}
-            {post.likeCount ?? 0}
-          </span>
-
-          {/* Comment count */}
-          <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
-            <IoChatbubbleOutline className='size-4 text-white' />
-            {post.commentCount ?? 0}
-          </span>
-
           {/* Save indicator */}
           {isSaved && (
             <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
