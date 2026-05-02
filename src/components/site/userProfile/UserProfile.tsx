@@ -7,6 +7,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useUserProfile } from '@/hooks/users/useUserProfile';
 import { useToggleFollow } from '@/hooks/profile/useFollow';
 import { useUserPosts } from '@/hooks/users/useUserPosts';
+import { useUserLikes } from '@/hooks/users/useUserLikes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PostDetail } from '@/components/site/post/ui/PostDetail';
@@ -80,6 +81,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
   const { data: profile, isLoading, isError } = useUserProfile(username);
   const toggleFollow = useToggleFollow(username);
   const { data: posts } = useUserPosts(username);
+  const { data: likedPosts } = useUserLikes(username);
 
   const [tab, setTab] = useState<Tab>('posts');
   const [activePostId, setActivePostId] = useState<number | null>(null);
@@ -88,6 +90,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
   if (isError || !profile) return <ProfileNotFound />;
 
   const isMe = currentUser?.username === username;
+  const displayPosts = tab === 'posts' ? (posts ?? []) : (likedPosts ?? []);
 
   return (
     <div className='min-h-screen text-white'>
@@ -102,8 +105,6 @@ export function ProfilePage({ username }: ProfilePageProps) {
           </button>
           <span className='font-bold text-lg'>{profile.username}</span>
         </div>
-
-        {/* Avatar */}
         <Avatar className='size-10'>
           <AvatarImage src={profile.avatarUrl ?? ''} />
           <AvatarFallback>{profile.name[0]}</AvatarFallback>
@@ -128,13 +129,10 @@ export function ProfilePage({ username }: ProfilePageProps) {
               @{profile.username}
             </span>
 
-            {/* Right Side: Action Buttons */}
             {!isMe && (
               <div className='flex items-center gap-2 mt-1 md:w-auto md:order-1 md:mt-5'>
                 <Button
-                  onClick={() =>
-                    toggleFollow.mutate(profile.isFollowing ?? false)
-                  }
+                  onClick={() => toggleFollow.mutate(profile.isFollowing ?? false)}
                   disabled={toggleFollow.isPending}
                   variant='ghost'
                   className={`h-9 rounded-full font-bold text-sm flex-1 px-6 transition-all md:px-15 ${
@@ -143,14 +141,9 @@ export function ProfilePage({ username }: ProfilePageProps) {
                       : 'bg-primary-300 text-white hover:bg-primary-200'
                   }`}
                 >
-                  {toggleFollow.isPending
-                    ? '...'
-                    : profile.isFollowing
-                      ? 'Following'
-                      : 'Follow'}
+                  {toggleFollow.isPending ? '...' : profile.isFollowing ? 'Following' : 'Follow'}
                 </Button>
 
-                {/* Message Button */}
                 <Button
                   variant='ghost'
                   className='h-9 w-9 rounded-full border border-neutral-700 text-neutral-300 hover:bg-white/5 p-0 flex items-center justify-center shrink-0'
@@ -183,10 +176,10 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
         {/* ── Stats ── */}
         <div className='flex border-y border-[rgba(255,255,255,0.06)]'>
-          <StatItem label='Posts' value={profile.counts?.post} />
-          <StatItem label='Followers' value={profile.counts?.followers} />
-          <StatItem label='Following' value={profile.counts?.following} />
-          <StatItem label='Likes' value={profile.counts?.likes} />
+          <StatItem label='Posts' value={profile.counts?.post ?? 0} />
+          <StatItem label='Followers' value={profile.counts?.followers ?? 0} />
+          <StatItem label='Following' value={profile.counts?.following ?? 0} />
+          <StatItem label='Likes' value={profile.counts?.likes ?? 0} />
         </div>
 
         {/* ── Tabs ── */}
@@ -215,12 +208,12 @@ export function ProfilePage({ username }: ProfilePageProps) {
 
         {/* ── Post Grid ── */}
         <div className='grid grid-cols-3 gap-0.5'>
-          {!posts?.length ? (
+          {!displayPosts.length ? (
             <div className='col-span-3 py-16 text-center text-neutral-600 text-sm'>
-              No posts yet
+              {tab === 'posts' ? 'No posts yet' : 'No liked posts yet'}
             </div>
           ) : (
-            posts.map((post) => (
+            displayPosts.map((post) => (
               <button
                 key={post.id}
                 onClick={() => setActivePostId(post.id)}
