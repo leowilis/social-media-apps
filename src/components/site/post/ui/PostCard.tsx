@@ -14,6 +14,7 @@ import { LikesSheet } from '@/components/features/likes/LikesSheet';
 import { useToggleLike } from '@/hooks/post/useLike';
 import { useIsSaved, useToggleSave } from '@/hooks/post/useSave';
 import type { Post } from '@/types/post';
+import { useAppSelector } from '@/store/hooks';
 
 // Types
 
@@ -47,9 +48,14 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
 
   const toggleLike = useToggleLike(post.id);
   const toggleSave = useToggleSave(post.id);
+  
+  // Redux as source of truth
   const savedFromStore = useIsSaved(post.id);
+  const likedFromStore = useAppSelector((s) =>
+    s.likes.likedPostIds.includes(post.id)
+  );
 
-  const [liked, setLiked] = useState(post.likedByMe ?? false);
+  const [liked, setLiked] = useState(likedFromStore || post.likedByMe || false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [saved, setSaved] = useState(savedFromStore || post.savedByMe || false);
@@ -60,14 +66,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   const [showToast, setShowToast] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-  // Sync local state when post prop changes
-  useEffect(() => {
-    setLiked(Boolean(post.likedByMe));
-    setLikeCount(post.likeCount);
-    setCommentCount(post.commentCount);
-    setSaved(Boolean(post.savedByMe));
-  }, [post]);
-
+ 
   const showNotif = (msg: string) => {
     setToastMsg(msg);
     setShowToast(true);
