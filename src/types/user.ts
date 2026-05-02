@@ -18,7 +18,7 @@ export interface UserProfile extends User {
     following: number;
     likes: number;
   };
-  isFollowedByMe?: boolean;
+  isFollowing?: boolean;
   isMe?: boolean;
   followsMe?: boolean;
 }
