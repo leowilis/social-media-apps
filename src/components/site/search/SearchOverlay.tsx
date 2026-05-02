@@ -93,7 +93,7 @@ function UserResultItem({
         <p className='text-xs text-neutral-500 truncate'>@{user.username}</p>
       </div>
 
-      {user.isFollowedByMe && (
+      {user.isFollowing && (
         <span
           className='shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full'
           style={{
