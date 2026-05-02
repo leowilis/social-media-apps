@@ -133,19 +133,19 @@ export function ProfilePage({ username }: ProfilePageProps) {
               <div className='flex items-center gap-2 mt-1 md:w-auto md:order-1 md:mt-5'>
                 <Button
                   onClick={() =>
-                    toggleFollow.mutate(profile.isFollowedByMe ?? false)
+                    toggleFollow.mutate(profile.isFollowing ?? false)
                   }
                   disabled={toggleFollow.isPending}
                   variant='ghost'
                   className={`h-9 rounded-full font-bold text-sm flex-1 px-6 transition-all md:px-15 ${
-                    profile.isFollowedByMe
+                    profile.isFollowing
                       ? 'border border-neutral-700 text-neutral-300 hover:bg-white/5'
                       : 'bg-primary-300 text-white hover:bg-primary-200'
                   }`}
                 >
                   {toggleFollow.isPending
                     ? '...'
-                    : profile.isFollowedByMe
+                    : profile.isFollowing
                       ? 'Following'
                       : 'Follow'}
                 </Button>
