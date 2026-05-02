@@ -12,9 +12,12 @@ export interface User {
  * Used on profile pages and user detail views.
  */
 export interface UserProfile extends User {
-  followersCount: number;
-  followingCount: number;
-  postsCount: number;
+  counts: {
+    post: number;
+    followers: number;
+    following: number;
+    likes: number;
+  };
   isFollowedByMe?: boolean;
   isMe?: boolean;
   followsMe?: boolean;
