@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import Navbar from "@/components/site/header/Navbar";
 import { HomeBottomNav } from "@/components/site/bottom/BottomNav";
-import { LikeProvider } from "@/components/features/likes/LikeContext";
 import { useSearchParams } from "next/navigation";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -12,12 +11,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Navbar - hidden on desktop when post overlay is open */}
       <div className={`${hasPost ? "md:hidden" : "block"}`}>
         <Navbar />
       </div>
 
-      {/* Main content with proper padding */}
       <main
         className={`
           ${
@@ -30,7 +27,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Bottom nav - hidden when post overlay is open */}
       <div className={`${hasPost ? "hidden" : "block"}`}>
         <HomeBottomNav />
       </div>
@@ -40,16 +36,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <LikeProvider>
-      <Suspense
-        fallback={
-          <div className="min-h-screen bg-black flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#7c5cfc] border-t-transparent rounded-full animate-spin" />
-          </div>
-        }
-      >
-        <LayoutContent>{children}</LayoutContent>
-      </Suspense>
-    </LikeProvider>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#7c5cfc] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <LayoutContent>{children}</LayoutContent>
+    </Suspense>
   );
 }
