@@ -64,9 +64,12 @@ export function useToggleFollow(username: string) {
           return {
             ...old,
             isFollowedByMe: !isFollowing,
-            followersCount: isFollowing
-              ? old.followersCount - 1
-              : old.followersCount + 1,
+            counts: {
+              ...old.counts,
+              followers: isFollowing
+                ? Math.max(0, old.counts.followers - 1)
+                : old.counts.followers + 1,
+            },
           };
         },
       );
