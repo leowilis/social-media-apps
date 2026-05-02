@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { store } from '@/store';
 import { hydrateLikes } from '@/store/slices/likeSlice';
+import { hydrateSaves } from '@/store/slices/saveSlice';
 
 export default function ProviderContainer({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -17,6 +18,7 @@ export default function ProviderContainer({ children }: { children: React.ReactN
 
   useEffect(() => {
     store.dispatch(hydrateLikes());
+    store.dispatch(hydrateSaves());
   }, []);
 
   return (

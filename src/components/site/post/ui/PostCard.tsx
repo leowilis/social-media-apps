@@ -12,7 +12,7 @@ import { PostActionsBar } from './PostActionBar';
 import { CommentSection } from './CommentSection';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
 import { useToggleLike } from '@/hooks/post/useLike';
-import { useToggleSave } from '@/hooks/post/useSave';
+import { useIsSaved, useToggleSave } from '@/hooks/post/useSave';
 import type { Post } from '@/types/post';
 
 // Types
@@ -47,11 +47,12 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
 
   const toggleLike = useToggleLike(post.id);
   const toggleSave = useToggleSave(post.id);
+  const savedFromStore = useIsSaved(post.id);
 
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const [saved, setSaved] = useState(post.savedByMe ?? false);
+  const [saved, setSaved] = useState(savedFromStore || post.savedByMe || false);
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);

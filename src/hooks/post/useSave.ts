@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { savesApi } from '@/lib/api/saves';
 import { addSave, removeSave } from '@/store/slices/saveSlice';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { meKeys } from '@/hooks/profile/key';
 import { postKeys } from '@/hooks/post/usePosts';
 import type { Post } from '@/types/post';
@@ -90,4 +90,12 @@ export function useToggleSave(postId: number) {
       queryClient.invalidateQueries({ queryKey: meKeys.saved });
     },
   });
+}
+
+/**
+ * Returns whether a post is saved by the current user.
+ * Uses Redux savesSlice as source of truth.
+ */
+export function useIsSaved(postId: number): boolean {
+  return useAppSelector((s) => s.saves.savedPostIds.includes(postId));
 }
