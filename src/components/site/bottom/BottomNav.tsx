@@ -7,14 +7,14 @@ import { IoAdd, IoHome, IoPerson } from "react-icons/io5";
 
 export function HomeBottomNav() {
   const pathname = usePathname();
-  const [visible, setVisible]           = useState(true);
-  const [hoverAdd, setHoverAdd]         = useState(false);
-  const [tapped, setTapped]             = useState<string | null>(null);
+  const [visible, setVisible] = useState(true);
+  const [hoverAdd, setHoverAdd] = useState(false);
+  const [tapped, setTapped] = useState<string | null>(null);
   const [searchActive, setSearchActive] = useState(false);
-  const [isMd, setIsMd]                 = useState(false);
+  const [isMd, setIsMd] = useState(false);
   const lastScrollY = useRef(0);
 
-  const isHomeActive    = pathname === "/" || pathname === "/home";
+  const isHomeActive = pathname === "/" || pathname === "/home";
   const isProfileActive = pathname === "/myprofile" || pathname === "/myProfile" || pathname.startsWith("/profile/");
 
   useEffect(() => {
