@@ -19,7 +19,6 @@ type FeedCache = InfiniteData<FeedPage>;
 
 // Helpers
 
-// Updates a post in all feed pages using an updater function
 function updateFeedPages(
   old: FeedCache | undefined,
   postId: number,
@@ -43,8 +42,6 @@ const likeKeys = {
   feed: ['feed'] as const,
   myLikes: ['me', 'likes'] as const,
 };
-
-// Hooks
 
 /**
  * Fetches users who liked a post.
@@ -91,7 +88,7 @@ export function useToggleLike(postId: number) {
           : (post.likeCount ?? 0) + 1,
       });
 
-      // Update single post cache
+      // Update post detail cache
       queryClient.setQueryData<Post>(likeKeys.post(postId), (old) =>
         old ? updater(old) : old,
       );
@@ -113,7 +110,6 @@ export function useToggleLike(postId: number) {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: likeKeys.feed });
       queryClient.invalidateQueries({ queryKey: likeKeys.myLikes });
     },
   });
