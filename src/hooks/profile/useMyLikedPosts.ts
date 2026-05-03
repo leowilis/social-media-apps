@@ -17,7 +17,8 @@ export function useMyLikedPosts() {
   const query = useQuery<Post[]>({
     queryKey: ['me', 'liked'],
     queryFn: fetchMyLikedPosts,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 0,
+    refetchInterval: 10000
   });
 
   return {
