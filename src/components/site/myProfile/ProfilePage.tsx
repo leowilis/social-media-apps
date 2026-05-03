@@ -12,6 +12,7 @@ import {
   IoHeart,
   IoChatbubbleOutline,
   IoCloseOutline,
+  IoSend,
 } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ type ProfilePageProps = {
   activeTab: 'gallery' | 'saved';
   onTabChange: (tab: 'gallery' | 'saved') => void;
   postsLoading?: boolean;
+  onPostClick?: (postId: number) => void;
   onOpenFollowers?: () => void;
   onOpenFollowing?: () => void;
   modal?: 'followers' | 'following' | null;
@@ -59,39 +61,62 @@ type ProfilePageProps = {
 function GridItem({
   post,
   isSaved = false,
+  onPostClick,
 }: {
   post: Post;
   isSaved?: boolean;
+  onPostClick?: (postId: number) => void;
 }) {
   const [hovered, setHovered] = useState(false);
 
-  return (
-    <Link
-      href={`/post/${post.id}?liked=${post.likedByMe}&likeCount=${post.likeCount}&saved=${isSaved}`}
+  const content = (
+    <div
+      className='relative aspect-square w-full overflow-hidden'
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
+      <Image
+        src={post.imageUrl}
+        alt={post.caption ?? ''}
+        fill
+        className={`object-cover transition-transform duration-300 ${hovered ? 'scale-105' : 'scale-100'}`}
+        sizes='33vw'
+      />
       <div
-        className='relative aspect-square w-full overflow-hidden'
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-4 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
       >
-        <Image
-          src={post.imageUrl}
-          alt={post.caption ?? ''}
-          fill
-          className={`object-cover transition-transform duration-300 ${hovered ? 'scale-105' : 'scale-100'}`}
-          sizes='33vw'
-        />
-        <div
-          className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-4 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {/* Save indicator */}
-          {isSaved && (
-            <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
-              <IoBookmark className='size-4 text-white' />
-            </span>
+        <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
+          {post.likedByMe ? (
+            <IoHeart className='size-4 text-red-500' />
+          ) : (
+            <IoHeartOutline className='size-4 text-white' />
           )}
-        </div>
+          {post.likeCount ?? 0}
+        </span>
+        <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
+          <IoChatbubbleOutline className='size-4 text-white' />
+          {post.commentCount ?? 0}
+        </span>
+        {isSaved && (
+          <span className='flex items-center gap-1.5 text-white font-bold text-sm'>
+            <IoBookmark className='size-4 text-white' />
+          </span>
+        )}
       </div>
+    </div>
+  );
+
+  if (onPostClick) {
+  return (
+    <button className='w-full' onClick={() => onPostClick(post.id)}>
+      {content}
+    </button>
+  );
+}
+
+  return (
+    <Link href={`/post/${post.id}?liked=${post.likedByMe}&likeCount=${post.likeCount}&saved=${isSaved}`}>
+      {content}
     </Link>
   );
 }
@@ -176,6 +201,7 @@ export function ProfilePage({
   activeTab,
   onTabChange,
   postsLoading,
+  onPostClick,
   onOpenFollowers,
   onOpenFollowing,
   modal,
@@ -186,25 +212,25 @@ export function ProfilePage({
   const posts = activeTab === 'gallery' ? galleryPosts : secondaryPosts;
 
   return (
-    <div className='flex flex-col min-h-screen bg-black text-white md:items-center'>
-      <div className='w-full md:max-w-[1200px]'>
+    <div className='flex flex-col min-h-screen md:items-center md:mt-3'>
+      <div className='w-full md:max-w-270'>
         {/* Header */}
         <div className='flex flex-col gap-5 px-2 pt-4 pb-2'>
           <div className='flex items-center gap-3'>
-            <Avatar className='size-15 border border-[rgba(126,145,183,0.32)]'>
+            <Avatar className='size-20 md:size-23'>
               <AvatarImage src={avatarUrl ?? ''} alt={name} />
-              <AvatarFallback className='text-xl font-bold'>
+              <AvatarFallback className='text-2xl font-bold md:text-5xl'>
                 {name?.[0]?.toUpperCase() ?? ''}
               </AvatarFallback>
             </Avatar>
-            <div className='flex flex-col'>
-              <span className='text-lg font-bold'>{name}</span>
-              <span className='text-sm text-neutral-500'>{username}</span>
+            <div className='flex flex-col md:m-2'>
+              <span className='text-lg font-extrabold truncate md:text-2xl md:mb-2'>{name}</span>
+              <span className='text-sm md:text-base md:basis-full'>@{username}</span>
             </div>
             {mode === 'self' && (
-              <div className='hidden md:flex items-center gap-2 ml-auto'>
+              <div className='hidden items-center gap-2 ml-auto md:flex'>
                 <Link href='/editprofile'>
-                  <Button className='h-9 rounded-full border bg-neutral-950 border-gray-900 text-sm font-semibold text-white px-4'>
+                  <Button className='h-9 rounded-full border bg-neutral-950 border-gray-900 text-sm font-semibold text-white px-4 md:px-15'>
                     Edit Profile
                   </Button>
                 </Link>
@@ -213,7 +239,7 @@ export function ProfilePage({
                   size='icon'
                   className='size-9 rounded-full border border-gray-900 text-white shrink-0'
                 >
-                  <IoPaperPlaneOutline className='size-4' />
+                  <IoSend size={16} className='rotate-[-45deg] mb-0.5 ml-0.5' />
                 </Button>
               </div>
             )}
@@ -246,16 +272,8 @@ export function ProfilePage({
           <div className='flex border-[rgba(126,145,183,0.2)]'>
             {[
               { label: 'Post', value: stats.post, onClick: undefined },
-              {
-                label: 'Followers',
-                value: stats.followers,
-                onClick: onOpenFollowers,
-              },
-              {
-                label: 'Following',
-                value: stats.following,
-                onClick: onOpenFollowing,
-              },
+              { label: 'Followers', value: stats.followers, onClick: onOpenFollowers },
+              { label: 'Following', value: stats.following, onClick: onOpenFollowing },
               { label: 'Likes', value: stats.likes, onClick: undefined },
             ].map((s, i) => (
               <div key={s.label} className='flex flex-1 items-center'>
@@ -281,16 +299,8 @@ export function ProfilePage({
         {/* Tabs */}
         <div className='flex border-b border-[rgba(126,145,183,0.2)]'>
           {[
-            {
-              key: 'gallery',
-              icon: <IoGridOutline className='size-4' />,
-              label: 'Gallery',
-            },
-            {
-              key: 'saved',
-              icon: <IoBookmarkOutline className='size-4' />,
-              label: 'Saved',
-            },
+            { key: 'gallery', icon: <IoGridOutline className='size-4' />, label: 'Gallery' },
+            { key: 'saved', icon: <IoBookmarkOutline className='size-4' />, label: 'Saved' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -315,9 +325,7 @@ export function ProfilePage({
         ) : posts.length === 0 ? (
           <div className='flex flex-col items-center justify-center gap-4 py-50 px-8 text-center'>
             <p className='text-lg font-bold'>
-              {activeTab === 'saved'
-                ? 'No saved posts yet'
-                : 'Your story starts here'}
+              {activeTab === 'saved' ? 'No saved posts yet' : 'Your story starts here'}
             </p>
             <p className='text-sm text-neutral-400 leading-loose tracking-wider'>
               {activeTab === 'saved'
@@ -339,6 +347,7 @@ export function ProfilePage({
                 key={post.id}
                 post={post}
                 isSaved={activeTab === 'saved'}
+                onPostClick={onPostClick}
               />
             ))}
           </div>
