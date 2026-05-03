@@ -4,11 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  IoArrowBack,
-  IoCloseOutline,
-  IoHappyOutline,
-} from 'react-icons/io5';
+import { IoArrowBack, IoCloseOutline, IoHappyOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePostDetail } from '@/hooks/post/usePostDetail';
 import { usePostActions } from '@/hooks/post/usePostActions';
@@ -25,6 +21,7 @@ import type { Comment } from '@/lib/api/comment';
 
 // Helpers
 
+// Time Upload
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return `${diff} Seconds Ago`;
@@ -154,7 +151,6 @@ interface PostDetailProps {
   postId: number;
   currentUserId?: number;
   onClose?: () => void;
-  
 }
 
 // Inner Component (renders after post data is available)
@@ -287,7 +283,9 @@ function PostDetailContent({
         {actionsBar}
 
         <div className='px-4 py-3'>
-          <span className='text-sm font-bold mr-2'>{post.author.name}</span>
+          <span className='text-sm font-bold mr-2 text-white'>
+            {post.author.name}
+          </span>
           <span className='text-sm text-neutral-200'>{post.caption}</span>
         </div>
 
