@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '@/lib/axios';
+import { toast } from 'sonner';
 import type { User } from '@/types/user';
 
 // Types
@@ -56,8 +57,8 @@ export function useMyProfileModal(username?: string) {
           `/users/${username}/${type}`,
         );
         setModalUsers(extractUsers(res.data?.data).map(toModalUser));
-      } catch (e) {
-        console.error(e);
+      } catch {
+        toast.error(`Failed to load list ${type}`);
         setModalUsers([]);
       } finally {
         setModalLoading(false);
