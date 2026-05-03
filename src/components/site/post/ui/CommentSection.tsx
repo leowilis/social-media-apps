@@ -57,10 +57,10 @@ const EMOJIS = [
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return `${diff}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+  if (diff < 60) return `${diff} Seconds`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} Minutes`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} Hours`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} Day`;
   return `${Math.floor(diff / 604800)}w`;
 }
 
@@ -79,12 +79,9 @@ function CommentItem({
   const isOwner = currentUserId === comment.author.id;
 
   return (
-    <div className='flex gap-3 relative group'>
-      <Link
-        href={`/profile/${comment.author.username}`}
-        className='shrink-0 mt-0.5'
-      >
-        <Avatar className='size-9 ring-1 ring-[rgba(124,92,252,0.2)] ring-offset-1 ring-offset-[#0e0e13]'>
+    <div className='flex gap-3 relative group py-4 border-b border-neutral-900'>
+      <Link href={`/profile/${comment.author.username}`} className='shrink-0'>
+        <Avatar className='size-9 ring-1 ring-[rgba(124,92,252,0.2)] ring-offset-1 ring-offset-[#0e0e13] md:size-13 md:items-center md:justify-center'>
           <AvatarImage
             src={comment.author.avatarUrl ?? ''}
             alt={comment.author.name}
@@ -96,34 +93,24 @@ function CommentItem({
       </Link>
 
       <div className='flex-1 min-w-0'>
-        <div
-          className='rounded-2xl rounded-tl-sm px-3 py-2'
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.05)',
-          }}
-        >
-          <div className='flex items-baseline gap-2 mb-0.5'>
-            <Link href={`/profile/${comment.author.username}`}>
-              <span className='text-xs font-bold text-white hover:text-[#a78bff] transition-colors'>
-                {comment.author.name}
-              </span>
-            </Link>
-            <span className='text-[10px] text-neutral-600'>
-              {timeAgo(comment.createdAt)}
-            </span>
-          </div>
-          <p className='text-sm text-neutral-200 leading-relaxed break-words'>
-            {comment.text}
+        <Link href={`/profile/${comment.author.username}`}>
+          <p className='text-sm font-bold text-white hover:text-[#a78bff] transition-colors leading-tight md:mb-2'>
+            {comment.author.name}
           </p>
-        </div>
+          <p className='text-xs text-neutral-500 mb-2'>
+            {timeAgo(comment.createdAt)}
+          </p>
+        </Link>
+        <p className='text-sm text-neutral-300 leading-relaxed break-words'>
+          {comment.text}
+        </p>
       </div>
 
       {isOwner && (
-        <div className='relative shrink-0 self-start pt-1'>
+        <div className='relative shrink-0 self-start'>
           <button
             onClick={() => setMenuOpen((p) => !p)}
-            className='opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-white transition-all p-1 rounded-lg hover:bg-white/5'
+            className='group-hover:opacity-100 text-white hover:text-white transition-all p-1 rounded-lg hover:bg-white/5'
           >
             <IoEllipsisVertical className='size-4' />
           </button>
@@ -169,6 +156,10 @@ interface CommentSectionProps {
   currentUserId?: number;
   onClose?: () => void;
   inline?: boolean;
+  /** Hides the "Comments" header — used in desktop PostDetail where header is separate */
+  hideHeader?: boolean;
+  /** Hides the input bar — used in desktop PostDetail where input is rendered separately */
+  hideInput?: boolean;
   onCommentAdded?: () => void;
   onCommentDeleted?: () => void;
   onDeleteRequest?: (commentId: number) => void;
@@ -186,6 +177,8 @@ export function CommentSection({
   currentUserId,
   onClose,
   inline = false,
+  hideHeader = false,
+  hideInput = false,
   onCommentAdded,
   onCommentDeleted,
   onDeleteRequest,
@@ -210,7 +203,6 @@ export function CommentSection({
     inputRef.current?.focus();
   }, []);
 
-  // Listen for external delete requests (e.g. from PostCard delete dialog)
   useEffect(() => {
     const handler = (e: Event) => {
       const id = (e as CustomEvent<number>).detail;
@@ -254,46 +246,40 @@ export function CommentSection({
   };
 
   const content = (
-    <div
-      className='flex flex-col h-full text-white'
-      style={{
-        background: 'linear-gradient(180deg, #0d0d18 0%, #080810 100%)',
-      }}
-    >
+    <div className='flex flex-col h-full text-white'>
       {/* Handle bar — mobile only */}
       <div className='flex justify-center pt-3 pb-1 shrink-0 md:hidden'>
         <div className='w-10 h-1 rounded-full bg-white/10' />
       </div>
 
-      {/* Header */}
-      <div
-        className='flex items-center justify-between px-5 py-3 shrink-0'
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-      >
-        <div className='flex items-center gap-2'>
-          <span className='text-sm font-bold tracking-wide'>Comments</span>
-          {comments.length > 0 && (
-            <span
-              className='text-[10px] font-bold px-2 py-0.5 rounded-full text-[#a78bff]'
-              style={{ background: 'rgba(124,92,252,0.15)' }}
+      {/* Header — hidden when hideHeader=true */}
+      {!hideHeader && (
+        <div
+          className='flex items-center justify-between px-5 py-3 shrink-0'
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          <div className='flex items-center gap-2'>
+            <span className='text-sm font-bold tracking-wide'>Comments</span>
+            {comments.length > 0 && (
+              <span className='text-[10px] font-bold px-2 py-0.5 rounded-full text-[#a78bff]'>
+                {comments.length}
+              </span>
+            )}
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className='flex items-center justify-center size-7 rounded-full text-neutral-500 hover:text-white transition-colors'
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             >
-              {comments.length}
-            </span>
+              <IoCloseOutline className='size-4' />
+            </button>
           )}
         </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className='flex items-center justify-center size-7 rounded-full text-neutral-500 hover:text-white transition-colors'
-            style={{ background: 'rgba(255,255,255,0.06)' }}
-          >
-            <IoCloseOutline className='size-4' />
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Comment List */}
-      <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
+      <div className='flex-1 overflow-y-auto px-4 py-2'>
         {isLoading && comments.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-16 gap-3'>
             <div className='size-8 rounded-full border-2 border-[#7c5cfc] border-t-transparent animate-spin' />
@@ -333,7 +319,7 @@ export function CommentSection({
       </div>
 
       {/* Emoji Picker */}
-      {showEmoji && (
+      {!hideInput && showEmoji && (
         <div
           className='mx-3 mb-2 p-3 rounded-2xl grid grid-cols-10 gap-1'
           style={{
@@ -358,64 +344,60 @@ export function CommentSection({
       )}
 
       {/* Input Row */}
-      <div
-        className='flex items-center gap-2.5 px-3 py-3 shrink-0'
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-      >
-        <button
-          type='button'
-          onClick={() => setShowEmoji((prev) => !prev)}
-          className={`shrink-0 size-9 flex items-center justify-center rounded-full transition-all ${
-            showEmoji
-              ? 'text-[#a78bff] bg-[rgba(124,92,252,0.15)]'
-              : 'text-neutral-500 hover:text-white hover:bg-white/5'
-          }`}
+      {!hideInput && (
+        <div
+          className='flex items-center gap-2.5 px-3 py-3 shrink-0'
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
         >
-          <IoHappyOutline className='size-5' />
-        </button>
+          <button
+            type='button'
+            onClick={() => setShowEmoji((prev) => !prev)}
+            className={`shrink-0 size-9 flex items-center justify-center rounded-full transition-all ${
+              showEmoji
+                ? 'text-[#a78bff] bg-[rgba(124,92,252,0.15)]'
+                : 'text-neutral-500 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <IoHappyOutline className='size-5' />
+          </button>
 
-        <div className='flex-1'>
-          <input
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder='Write a comment...'
-            className='w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none transition-all'
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
-            onFocus={(e) => {
-              e.target.style.border = '1px solid rgba(124,92,252,0.4)';
-              e.target.style.background = 'rgba(255,255,255,0.07)';
-            }}
-            onBlur={(e) => {
-              e.target.style.border = '1px solid rgba(255,255,255,0.07)';
-              e.target.style.background = 'rgba(255,255,255,0.05)';
-            }}
-          />
+          <div className='flex-1'>
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder='Add Comment'
+              className='w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none transition-all'
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.07)',
+              }}
+              onFocus={(e) => {
+                e.target.style.border = '1px solid rgba(124,92,252,0.4)';
+                e.target.style.background = 'rgba(255,255,255,0.07)';
+              }}
+              onBlur={(e) => {
+                e.target.style.border = '1px solid rgba(255,255,255,0.07)';
+                e.target.style.background = 'rgba(255,255,255,0.05)';
+              }}
+            />
+          </div>
+
+          <button
+            type='button'
+            onClick={handleSend}
+            disabled={!text.trim() || isSending}
+            className='shrink-0 px-3 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-all disabled:opacity-30 active:scale-90 text-[#a78bff]'
+          >
+            {isSending ? (
+              <div className='size-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
+            ) : (
+              'Post'
+            )}
+          </button>
         </div>
-
-        <button
-          type='button'
-          onClick={handleSend}
-          disabled={!text.trim() || isSending}
-          className='shrink-0 size-9 flex items-center justify-center rounded-full transition-all disabled:opacity-30 active:scale-90'
-          style={{
-            background: text.trim()
-              ? 'linear-gradient(135deg, #9b7dff 0%, #7c5cfc 100%)'
-              : 'rgba(255,255,255,0.06)',
-            boxShadow: text.trim() ? '0 2px 12px rgba(124,92,252,0.4)' : 'none',
-          }}
-        >
-          {isSending ? (
-            <div className='size-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
-          ) : (
-            <IoSendSharp className='size-4 text-white' />
-          )}
-        </button>
-      </div>
+      )}
     </div>
   );
 
@@ -424,14 +406,15 @@ export function CommentSection({
   return (
     <>
       <div
-        className='fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden'
+        className='fixed inset-0 bg-black/70 backdrop-blur-sm z-40'
         onClick={onClose}
       />
       <div
-        className='fixed bottom-0 left-0 right-0 z-50 h-[72vh] md:hidden'
+        className='fixed bottom-0 left-0 right-0 z-50 h-[72vh]'
         style={{
           borderRadius: '24px 24px 0 0',
           overflow: 'hidden',
+          background: '#0e0e13',
           boxShadow:
             '0 -8px 40px rgba(0,0,0,0.6), 0 -1px 0 rgba(255,255,255,0.05)',
         }}
