@@ -88,7 +88,7 @@ export function NavbarMobile({
           <>
             <div className='flex items-center gap-2'>
               <Image src={Logo} alt='logo' width={30} height={30} />
-              <span className='text-2xl font-bold'>Sociality</span>
+              <span className='text-xl font-bold'>Sociality</span>
             </div>
 
             <div className='flex items-center gap-3'>
