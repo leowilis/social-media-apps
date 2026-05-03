@@ -20,7 +20,6 @@ type FeedCache = InfiniteData<FeedPage>;
 
 // Helpers
 
-// Updates savedByMe on a post across all feed pages
 function updateFeedPages(
   old: FeedCache | undefined,
   postId: number,
@@ -31,7 +30,7 @@ function updateFeedPages(
     ...old,
     pages: old.pages.map((page) => ({
       ...page,
-      posts: page.items.map((p) => (p.id === postId ? updater(p) : p)),
+      items: page.items.map((p) => (p.id === postId ? updater(p) : p)),
     })),
   };
 }
@@ -42,7 +41,7 @@ function updateFeedPages(
  * Toggles save/unsave on a post with optimistic update.
  * Syncs with Redux saves slice for persistence.
  * NOTE: Post cache is not invalidated on settle due to a backend bug
- * where savedByMe is always returned as false.
+ * where savedByMe always returns false.
  */
 export function useToggleSave(postId: number) {
   const queryClient = useQueryClient();
@@ -85,8 +84,6 @@ export function useToggleSave(postId: number) {
     },
 
     onSettled: () => {
-      // NOTE: intentionally not invalidating postKeys.detail(postId)
-      // due to backend bug where savedByMe always returns false
       queryClient.invalidateQueries({ queryKey: meKeys.saved });
     },
   });
