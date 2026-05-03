@@ -59,7 +59,7 @@ export default function LoginPage() {
         src={Gradient}
         alt=''
         aria-hidden
-        className='absolute bottom-0 pointer-events-none w-full'
+        className='pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-[-5%] w-[140%] max-w-none blur-[3px]'
       />
 
       <div className='relative z-10 grid min-h-screen place-items-center px-6 py-8'>
