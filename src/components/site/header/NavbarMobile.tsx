@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,26 +17,20 @@ import {
 import Logo from '@/public/assets/logo/Logo.svg';
 import { AuthUser } from '@/types/auth';
 
+// Props
 interface NavbarMobileProps {
   isLoggedIn: boolean;
   me?: AuthUser | null;
-
   isProfileRoute: boolean;
   headerTitle: string;
   onBack: () => void;
-
-  // UI state
   menuOpen: boolean;
   setMenuOpen: (v: boolean) => void;
-
   showSearch: boolean;
   setShowSearch: (v: boolean) => void;
-
-  // search
   query: string;
   onQueryChange: (val: string) => void;
   onClear: () => void;
-
   onOpenSidebar: () => void;
 }
 
@@ -54,7 +49,20 @@ export function NavbarMobile({
   onClear,
   onOpenSidebar,
 }: NavbarMobileProps) {
+  const router = useRouter();
   const avatarFallback = me?.name?.[0]?.toUpperCase() ?? '';
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && query.trim()) {
+      setShowSearch(false);
+      onClear();
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+    if (e.key === 'Escape') {
+      setShowSearch(false);
+      onClear();
+    }
+  };
 
   return (
     <>
@@ -67,22 +75,30 @@ export function NavbarMobile({
               </Button>
               <span className='font-bold'>{headerTitle}</span>
             </div>
-
             <Avatar onClick={onOpenSidebar}>
               <AvatarImage src={me?.avatarUrl ?? ''} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
           </>
         ) : showSearch ? (
-          <div className='flex w-full gap-2'>
+          <div className='flex w-full gap-3 items-center'>
             <input
               autoFocus
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder='Search...'
-              className='flex-1 bg-transparent outline-none'
+              onKeyDown={handleSearchKeyDown}
+              placeholder='Search name or username...'
+              className='flex-1 bg-transparent outline-none text-sm text-white placeholder:text-neutral-600'
             />
-            <button onClick={onClear}>Cancel</button>
+            <button
+              onClick={() => {
+                setShowSearch(false);
+                onClear();
+              }}
+              className='text-sm text-neutral-400 shrink-0'
+            >
+              Cancel
+            </button>
           </div>
         ) : (
           <>
@@ -92,7 +108,7 @@ export function NavbarMobile({
             </div>
 
             <div className='flex items-center gap-3'>
-              <button onClick={() => setShowSearch(true)}>
+              <button onClick={() => router.push('/search')}>
                 <IoSearchOutline className='size-6' />
               </button>
 
