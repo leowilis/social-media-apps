@@ -1,14 +1,17 @@
 'use client';
 
-
 import {
   useMutation,
   useInfiniteQuery,
   useQueryClient,
   InfiniteData,
 } from '@tanstack/react-query';
-import { commentsApi, type Comment, type CommentsResponse } from '@/lib/api/comment';
-
+import {
+  commentsApi,
+  type Comment,
+  type CommentsResponse,
+} from '@/lib/api/comment';
+import type { Post } from '@/types/post';
 
 // Types
 
@@ -22,9 +25,8 @@ const commentKeys = {
   post: (postId: number) => ['posts', postId] as const,
 };
 
-// Hooks
+// FETCH COMMENTS
 
-// Fetches paginated comments for a post using infinite scroll
 export function useComments(postId: number) {
   return useInfiniteQuery({
     queryKey: commentKeys.list(postId),
@@ -41,10 +43,8 @@ export function useComments(postId: number) {
   });
 }
 
-/**
- * Adds a comment to a post with optimistic update.
- * Reverts on error and invalidates cache on settle.
- */
+// ADD COMMENT
+
 export function useAddComment(postId: number, currentUser: Comment['author']) {
   const queryClient = useQueryClient();
 
@@ -53,10 +53,12 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
 
     onMutate: async (text: string) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+
       const previous = queryClient.getQueryData<CommentsCache>(
         commentKeys.list(postId),
       );
 
+      // Optimistic comment
       const optimistic: Comment = {
         id: Date.now(),
         text,
@@ -65,10 +67,12 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
         author: currentUser,
       };
 
+      // Update comments list
       queryClient.setQueryData<CommentsCache>(
         commentKeys.list(postId),
         (old) => {
           if (!old) return old;
+
           return {
             ...old,
             pages: old.pages.map((page, i) =>
@@ -80,10 +84,17 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
         },
       );
 
-      queryClient.setQueryData<{ commentCount: number }>(
+      // Update post commentCount 
+      queryClient.setQueryData<Post>(
         commentKeys.post(postId),
-        (old) =>
-          old ? { ...old, commentCount: (old.commentCount ?? 0) + 1 } : old,
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            commentCount: old.commentCount + 1,
+          };
+        },
       );
 
       return { previous };
@@ -96,32 +107,34 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
     },
 
     onSettled: () => {
+      // only refetch comments (NO flicker on post)
       queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
-      queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
     },
   });
 }
 
-/**
- * Deletes a comment with optimistic update.
- * Reverts on error and invalidates cache on settle.
- */
+// DELETE COMMENT
+
 export function useDeleteComment(postId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (commentId: number) => commentsApi.deleteComment(commentId),
+    mutationFn: (commentId: number) =>
+      commentsApi.deleteComment(commentId),
 
     onMutate: async (commentId: number) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+
       const previous = queryClient.getQueryData<CommentsCache>(
         commentKeys.list(postId),
       );
 
+      // Remove comment
       queryClient.setQueryData<CommentsCache>(
         commentKeys.list(postId),
         (old) => {
           if (!old) return old;
+
           return {
             ...old,
             pages: old.pages.map((page) => ({
@@ -132,12 +145,17 @@ export function useDeleteComment(postId: number) {
         },
       );
 
-      queryClient.setQueryData<{ commentCount: number }>(
+      // Update count
+      queryClient.setQueryData<Post>(
         commentKeys.post(postId),
-        (old) =>
-          old
-            ? { ...old, commentCount: Math.max((old.commentCount ?? 1) - 1, 0) }
-            : old,
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            commentCount: Math.max(old.commentCount - 1, 0),
+          };
+        },
       );
 
       return { previous };
@@ -151,7 +169,6 @@ export function useDeleteComment(postId: number) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
-      queryClient.invalidateQueries({ queryKey: commentKeys.post(postId) });
     },
   });
 }
