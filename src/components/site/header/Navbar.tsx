@@ -91,7 +91,7 @@ export default function Navbar() {
           onOpenSidebar={() => setSidebarOpen(true)}
         />
 
-        <Separator />
+        <Separator className="bg-white/10" />
       </header>
 
       <div className='md:h-[81px]' />
