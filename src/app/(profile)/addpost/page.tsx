@@ -8,6 +8,7 @@ import {
   IoImagesOutline,
   IoCloseCircle,
   IoHappyOutline,
+  IoArrowBack,
 } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,10 +74,20 @@ export default function AddPostPage() {
   // Render
 
   return (
-    <div className='flex flex-col gap-5 px-4 py-6 min-h-screen bg-black text-white'>
+    <div className='flex flex-col gap-5 px-4 py-6 min-h-screen bg-black text-white md:max-w-2xl md:mx-auto'>
+      {/* Header — desktop only */}
+      <div className='hidden md:flex items-center gap-3 mb-8'>
+        <button
+          onClick={() => router.back()}
+          className='text-white hover:text-neutral-400 transition-colors'
+        >
+          <IoArrowBack className='size-5' />
+        </button>
+        <span className='text-lg font-bold md:text-2xl'>Add Post</span>
+      </div>
       {/* Photo Upload */}
-      <div className='flex flex-col gap-2'>
-        <span className='text-sm font-bold text-neutral-300'>Photo</span>
+      <div className='flex flex-col gap-2 '>
+        <span className='text-sm font-bold text-neutral-50 md:text-lg'>Photo</span>
 
         {preview ? (
           <div className='relative w-full rounded-2xl overflow-hidden aspect-square'>
@@ -107,11 +118,11 @@ export default function AddPostPage() {
           >
             <IoCloudUploadOutline className='size-10 text-neutral-500' />
             <div className='text-center'>
-              <p className='text-sm font-semibold text-white'>
+              <p className='text-sm font-semibold text-neutral-600'>
                 <span className='text-primary-300'>Click to upload</span> or
                 drag and drop
               </p>
-              <p className='text-xs text-neutral-500 mt-1'>
+              <p className='text-xs text-neutral-600 mt-1'>
                 PNG, JPG, JPEG (max 5MB)
               </p>
             </div>
@@ -130,7 +141,7 @@ export default function AddPostPage() {
       {/* Caption */}
       <div className='flex flex-col gap-2'>
         <div className='flex items-center justify-between'>
-          <span className='text-sm font-bold text-neutral-300'>Caption</span>
+          <span className='text-sm font-bold text-neutral-50 md:text-lg'>Caption</span>
           <span className='text-xs text-neutral-500'>
             {caption.length}/{MAX_CAPTION}
           </span>
@@ -140,9 +151,9 @@ export default function AddPostPage() {
           <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value.slice(0, MAX_CAPTION))}
-            placeholder='Write a caption...'
+            placeholder='Create your caption'
             rows={4}
-            className='rounded-xl border border-neutral-800 bg-neutral-900 text-white placeholder:text-neutral-500 focus-visible:border-purple-500 focus-visible:ring-0 resize-none pr-10'
+            className='rounded-xl border border-neutral-800 bg-neutral-950 text-white placeholder:text-neutral-500 focus-visible:border-purple-500 focus-visible:ring-0 resize-none pr-10'
           />
           <button
             type='button'
