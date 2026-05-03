@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { IoSearchOutline, IoCloseOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { api } from '@/lib/axios';
+import { toast } from 'sonner';
 
 type SearchUser = {
   id: number;
@@ -98,6 +99,7 @@ export default function SearchPage() {
       setUsers(res.data.data?.users ?? []);
     } catch {
       setUsers([]);
+      toast.error("Failed to load search results.");
     } finally {
       setIsLoading(false);
     }
@@ -150,8 +152,8 @@ export default function SearchPage() {
             : user,
         ),
       );
-    } catch (error) {
-      console.error(error);
+    } catch {
+      toast.error("Failed to perform action. Please try again.");
     }
   };
 
