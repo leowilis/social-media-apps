@@ -6,6 +6,7 @@ import { IoSearchOutline, IoCloseOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSearch } from '@/hooks/search/useSearch';
 import type { UserProfile } from '@/types/user';
+import router from 'next/router';
 // Types
 
 interface SearchOverlayProps {
@@ -178,12 +179,19 @@ export function SearchOverlay({ onClose }: SearchOverlayProps) {
               style={{ color: query ? '#a78bff' : 'rgba(255,255,255,0.3)' }}
             />
             <input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => handleChange(e.target.value)}
-              placeholder='Search name or username...'
-              className='flex-1 bg-transparent text-sm text-white placeholder:text-neutral-600 outline-none'
-            />
+  ref={inputRef}
+  value={query}
+  onChange={(e) => handleChange(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' && query.trim()) {
+      onClose();
+      clearQuery();
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  }}
+  placeholder='Search name or username...'
+  className='flex-1 bg-transparent text-sm text-white placeholder:text-neutral-600 outline-none'
+/>
             {query && (
               <button
                 onClick={handleClear}
