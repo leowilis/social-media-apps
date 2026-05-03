@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IoPaperPlaneOutline } from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,8 +13,8 @@ import { CommentSection } from './CommentSection';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
 import { useToggleLike } from '@/hooks/post/useLike';
 import { useIsSaved, useToggleSave } from '@/hooks/post/useSave';
-import type { Post } from '@/types/post';
 import { useAppSelector } from '@/store/hooks';
+import type { Post } from '@/types/post';
 
 // Types
 
@@ -25,6 +25,7 @@ interface PostCardProps {
 
 // Helpers
 
+// Time Upload
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
   if (diff < 60) return `${diff}s ago`;
@@ -40,7 +41,8 @@ function timeAgo(dateStr: string): string {
 
 /**
  * Post card shown in the feed.
- * Handles like/save with optimistic UI, comments sheet, likes sheet,
+ * Uses Redux as source of truth for liked/saved state.
+ * Handles optimistic UI, comments sheet, likes sheet,
  * and desktop overlay navigation.
  */
 export function PostCard({ post, currentUserId }: PostCardProps) {
@@ -48,17 +50,13 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
 
   const toggleLike = useToggleLike(post.id);
   const toggleSave = useToggleSave(post.id);
-  
-  // Redux as source of truth
-  const savedFromStore = useIsSaved(post.id);
-  const likedFromStore = useAppSelector((s) =>
-    s.likes.likedPostIds.includes(post.id)
-  );
 
-  const [liked, setLiked] = useState(likedFromStore || post.likedByMe || false);
+  // Redux as single source of truth — always reactive
+  const liked = useAppSelector((s) => s.likes.likedPostIds.includes(post.id));
+  const saved = useIsSaved(post.id);
+
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
-  const [saved, setSaved] = useState(savedFromStore || post.savedByMe || false);
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
@@ -66,7 +64,6 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   const [showToast, setShowToast] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
- 
   const showNotif = (msg: string) => {
     setToastMsg(msg);
     setShowToast(true);
@@ -74,23 +71,16 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   };
 
   const handleLike = () => {
-    setLiked((p) => !p);
     setLikeCount((p) => (liked ? p - 1 : p + 1));
     toggleLike.mutate(liked, {
-      onError: () => {
-        setLiked(liked);
-        setLikeCount((p) => (liked ? p + 1 : p - 1));
-      },
+      onError: () => setLikeCount((p) => (liked ? p + 1 : p - 1)),
     });
   };
 
   const handleSave = () => {
-    const wasSaved = saved;
-    setSaved((p) => !p);
-    toggleSave.mutate(wasSaved, {
-      onSuccess: () =>
-        showNotif(wasSaved ? 'Removed from saved' : 'Post saved!'),
-      onError: () => setSaved(wasSaved),
+    toggleSave.mutate(saved, {
+      onSuccess: () => showNotif(saved ? 'Removed from saved' : 'Post saved!'),
+      onError: () => showNotif('Something went wrong'),
     });
   };
 
@@ -100,6 +90,18 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
       `?postId=${post.id}&liked=${liked}&likeCount=${likeCount}&saved=${saved}`,
       { scroll: false },
     );
+  };
+
+  /** Desktop — open post detail overlay. Mobile — open comment sheet. */
+  const handleCommentClick = () => {
+    if (window.innerWidth >= 768) {
+      router.push(
+        `?postId=${post.id}&liked=${liked}&likeCount=${likeCount}&saved=${saved}`,
+        { scroll: false },
+      );
+      return;
+    }
+    setShowComments(true);
   };
 
   const caption = post.caption ?? '';
@@ -171,7 +173,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
         </Link>
 
         <div
-          className='relative w-full aspect-square overflow-hidden rounded-3xl cursor-pointer hidden md:block'
+          className='relative w-full aspect-square overflow-hidden rounded-3xl cursor-pointer hidden md:block md:rounded-md'
           onClick={handleImageClickDesktop}
         >
           <Image
@@ -194,7 +196,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
           onLike={handleLike}
           onSave={handleSave}
           onLikeCountClick={() => setShowLikes(true)}
-          onCommentClick={() => setShowComments(true)}
+          onCommentClick={handleCommentClick}
         />
 
         {/* Caption */}
