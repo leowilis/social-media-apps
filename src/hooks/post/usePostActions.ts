@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation';
 import { likesApi } from '@/lib/api/likes';
 import { savesApi } from '@/lib/api/saves';
 import { postsApi } from '@/lib/api/posts';
-import { postKeys } from './usePosts';
+import { postKeys } from '@/hooks/post/key';
 import { meKeys } from '@/hooks/profile/key';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { addLike, removeLike } from '@/store/slices/likeSlice';
+import { addSave, removeSave } from '@/store/slices/saveSlice';
 
 // Types
 
@@ -27,30 +30,37 @@ interface ToastState {
 
 /**
  * Handles all post actions: like, save, and delete.
- * Each action uses optimistic updates — the UI updates immediately
- * and rolls back automatically if the request fails.
+ * Like and save use local state initialized from Redux for instant UI updates.
+ * Redux is kept in sync for persistence across navigation.
  */
 export function usePostActions({
   postId,
-  initialLiked,
   initialLikeCount,
-  initialSaved,
 }: UsePostActionsProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  const [liked, setLiked] = useState(initialLiked);
+  // Init from Redux (source of truth), but use local state for instant UI
+  const likedFromStore = useAppSelector((s) =>
+    s.likes.likedPostIds.includes(postId),
+  );
+  const savedFromStore = useAppSelector((s) =>
+    s.saves.savedPostIds.includes(postId),
+  );
+
+  const [liked, setLiked] = useState(likedFromStore);
+  const [saved, setSaved] = useState(savedFromStore);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
-  const [saved, setSaved] = useState(initialSaved);
   const [toast, setToast] = useState<ToastState>({ message: '', show: false });
 
-  // Sync local state when server data updates (e.g. from refetchInterval)
   useEffect(() => {
-    setLikeCount(initialLikeCount);
-  }, [initialLikeCount]);
+    setSaved(savedFromStore);
+  }, [savedFromStore]);
+
   useEffect(() => {
-    setSaved(initialSaved);
-  }, [initialSaved]);
+    setLiked(likedFromStore);
+  }, [likedFromStore]);
 
   const showToast = useCallback((message: string) => {
     setToast({ message, show: true });
@@ -66,11 +76,13 @@ export function usePostActions({
     onMutate: (wasLiked) => {
       setLiked(!wasLiked);
       setLikeCount((c) => (wasLiked ? c - 1 : c + 1));
+      dispatch(wasLiked ? removeLike(postId) : addLike(postId));
     },
 
     onError: (_err, wasLiked) => {
       setLiked(wasLiked);
       setLikeCount((c) => (wasLiked ? c + 1 : c - 1));
+      dispatch(wasLiked ? addLike(postId) : removeLike(postId));
     },
 
     onSettled: () => {
@@ -78,18 +90,24 @@ export function usePostActions({
       queryClient.invalidateQueries({ queryKey: postKeys.feed });
     },
   });
+
   // Save
 
   const saveMutation = useMutation({
     mutationFn: (wasSaved: boolean) =>
       wasSaved ? savesApi.unsavePost(postId) : savesApi.savePost(postId),
+
     onMutate: (wasSaved) => {
       setSaved(!wasSaved);
+      dispatch(wasSaved ? removeSave(postId) : addSave(postId));
       showToast(wasSaved ? 'Removed from saved' : 'Post saved!');
     },
+
     onError: (_err, wasSaved) => {
       setSaved(wasSaved);
+      dispatch(wasSaved ? addSave(postId) : removeSave(postId));
     },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: meKeys.saved });
     },
@@ -136,6 +154,12 @@ export function usePostActions({
   };
 }
 
+// Create Post
+
+/**
+ * Creates a new post with image and caption.
+ * Invalidates feed and profile post cache on success.
+ */
 export function useCreatePost() {
   const queryClient = useQueryClient();
 
