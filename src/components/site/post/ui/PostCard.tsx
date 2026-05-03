@@ -28,13 +28,13 @@ interface PostCardProps {
 // Time Upload
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 604800)}w ago`;
-  if (diff < 31536000) return `${Math.floor(diff / 2592000)}mo ago`;
-  return `${Math.floor(diff / 31536000)}y ago`;
+  if (diff < 60) return `${diff}Seconds ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}Minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}Hours ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}Days ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)}Weeks ago`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)}Months ago`;
+  return `${Math.floor(diff / 31536000)}Years ago`;
 }
 
 // Component
@@ -55,7 +55,6 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   const liked = useAppSelector((s) => s.likes.likedPostIds.includes(post.id));
   const saved = useIsSaved(post.id);
 
-  const [likeCount, setLikeCount] = useState(post.likeCount);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -71,9 +70,8 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   };
 
   const handleLike = () => {
-    setLikeCount((p) => (liked ? p - 1 : p + 1));
     toggleLike.mutate(liked, {
-      onError: () => setLikeCount((p) => (liked ? p + 1 : p - 1)),
+      onError: () => {},
     });
   };
 
@@ -87,7 +85,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   const handleImageClickDesktop = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push(
-      `?postId=${post.id}&liked=${liked}&likeCount=${likeCount}&saved=${saved}`,
+      `?postId=${post.id}&liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`,
       { scroll: false },
     );
   };
@@ -96,7 +94,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
   const handleCommentClick = () => {
     if (window.innerWidth >= 768) {
       router.push(
-        `?postId=${post.id}&liked=${liked}&likeCount=${likeCount}&saved=${saved}`,
+        `?postId=${post.id}&liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`,
         { scroll: false },
       );
       return;
@@ -158,7 +156,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
 
         {/* Image — mobile: navigate, desktop: overlay */}
         <Link
-          href={`/post/${post.id}?liked=${liked}&likeCount=${likeCount}&saved=${saved}`}
+          href={`/post/${post.id}?liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`}
           className='md:hidden'
         >
           <div className='relative w-full aspect-square overflow-hidden rounded-3xl'>
@@ -188,7 +186,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
         {/* Actions */}
         <PostActionsBar
           liked={liked}
-          likeCount={likeCount}
+          likeCount={post.likeCount}
           saved={saved}
           commentCount={commentCount}
           isPendingLike={toggleLike.isPending}
@@ -223,7 +221,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
       {showLikes && (
         <LikesSheet
           postId={post.id}
-          likeCount={likeCount}
+          likeCount={post.likeCount}
           onClose={() => setShowLikes(false)}
         />
       )}
