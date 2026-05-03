@@ -6,7 +6,7 @@ import { useMe } from '@/hooks/profile/useMe';
 import { PostCard } from './PostCard';
 import { PostCardSkeleton } from '@/components/ui/skeletons';
 
-// Empty State
+// Sub-components
 
 function EmptyState() {
   return (
@@ -18,8 +18,6 @@ function EmptyState() {
     </div>
   );
 }
-
-// Error State
 
 function ErrorState() {
   return (
@@ -53,8 +51,6 @@ export function PostList() {
     return () => observer.disconnect();
   }, [hasMore, isLoading, loadMore]);
 
-  if (isError) return <ErrorState />;
-
   if (isLoading) {
     return (
       <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
@@ -65,7 +61,8 @@ export function PostList() {
     );
   }
 
-  if (!isLoading && posts.length === 0) return <EmptyState />;
+  if (isError) return <ErrorState />;
+  if (posts.length === 0) return <EmptyState />;
 
   return (
     <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
