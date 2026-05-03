@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { IoArrowBack, IoCloseOutline } from 'react-icons/io5';
+import {
+  IoArrowBack,
+  IoCloseOutline,
+  IoHappyOutline,
+} from 'react-icons/io5';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePostDetail } from '@/hooks/post/usePostDetail';
 import { usePostActions } from '@/hooks/post/usePostActions';
@@ -15,16 +19,19 @@ import { PostActionsBar } from '@/components/site/post/ui/PostActionBar';
 import { CommentSection } from '@/components/site/post/ui/CommentSection';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
 import type { Post } from '@/types/post';
+import { useAddComment } from '@/hooks/post/useComments';
+import { useMe } from '@/hooks/profile/useMe';
+import type { Comment } from '@/lib/api/comment';
 
 // Helpers
 
 function timeAgo(dateStr: string): string {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return `${Math.floor(diff / 604800)}w ago`;
+  if (diff < 60) return `${diff} Seconds Ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} Minute Ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} Hours Ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} Days Ago`;
+  return `${Math.floor(diff / 604800)} Weeks Ago`;
 }
 
 // Sub Components
@@ -47,9 +54,9 @@ function PostDetailError() {
 
 function AuthorHeader({ post }: { post: Post }) {
   return (
-    <div className='flex items-center gap-3'>
+    <div className='flex items-center gap-3 md:mb-2'>
       <Link href={`/profile/${post.author.username}`}>
-        <Avatar className='size-10 border border-[rgba(126,145,183,0.32)]'>
+        <Avatar className='size-10 border border-[rgba(126,145,183,0.32)] md:size-13'>
           <AvatarImage
             src={post.author.avatarUrl ?? ''}
             alt={post.author.name}
@@ -57,7 +64,7 @@ function AuthorHeader({ post }: { post: Post }) {
           <AvatarFallback>{post.author.name[0]}</AvatarFallback>
         </Avatar>
       </Link>
-      <div className='flex flex-col'>
+      <div className='flex flex-col md:gap-1'>
         <Link href={`/profile/${post.author.username}`}>
           <span className='text-sm font-bold text-white'>
             {post.author.name}
@@ -71,12 +78,83 @@ function AuthorHeader({ post }: { post: Post }) {
   );
 }
 
+// Desktop Comment Input
+
+function DesktopCommentInput({
+  postId,
+  onCommentAdded,
+}: {
+  postId: number;
+  onCommentAdded?: () => void;
+}) {
+  const { me } = useMe();
+  const addMutation = useAddComment(postId, me as Comment['author']);
+  const [text, setText] = useState('');
+
+  const handleSend = () => {
+    if (!text.trim()) return;
+    addMutation.mutate(text.trim());
+    setText('');
+    onCommentAdded?.();
+  };
+
+  return (
+    <div
+      className='flex items-center gap-2.5 px-3 py-3 shrink-0'
+      style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+    >
+      <button
+        type='button'
+        className='shrink-0 size-9 flex items-center justify-center rounded-full text-neutral-500 hover:text-white hover:bg-white/5 transition-all'
+      >
+        <IoHappyOutline className='size-5' />
+      </button>
+
+      <div className='flex-1'>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          placeholder='Add Comment'
+          className='w-full rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 outline-none transition-all'
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.07)',
+          }}
+          onFocus={(e) => {
+            e.target.style.border = '1px solid rgba(124,92,252,0.4)';
+            e.target.style.background = 'rgba(255,255,255,0.07)';
+          }}
+          onBlur={(e) => {
+            e.target.style.border = '1px solid rgba(255,255,255,0.07)';
+            e.target.style.background = 'rgba(255,255,255,0.05)';
+          }}
+        />
+      </div>
+
+      <button
+        type='button'
+        onClick={handleSend}
+        disabled={!text.trim() || addMutation.isPending}
+        className='shrink-0 px-3 h-9 flex items-center justify-center rounded-full text-sm font-semibold transition-all disabled:opacity-30 active:scale-90 text-[#a78bff]'
+      >
+        {addMutation.isPending ? (
+          <div className='size-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
+        ) : (
+          'Post'
+        )}
+      </button>
+    </div>
+  );
+}
+
 // Props
 
 interface PostDetailProps {
   postId: number;
   currentUserId?: number;
   onClose?: () => void;
+  
 }
 
 // Inner Component (renders after post data is available)
@@ -127,7 +205,7 @@ function PostDetailContent({
       liked={liked}
       likeCount={likeCount}
       saved={saved}
-      commentCount={post.commentCount + commentCount}
+      commentCount={post.commentCount}
       isPendingLike={isPendingLike}
       isPendingSave={isPendingSave}
       onLike={handleLike}
@@ -176,7 +254,7 @@ function PostDetailContent({
       )}
 
       {/* ══ MOBILE ══ */}
-      <div className='flex flex-col min-h-screen bg-[#0e0e13] text-white md:hidden'>
+      <div className='fixed inset-0 z-50 flex flex-col bg-black overflow-y-auto md:hidden'>
         <div className='flex items-center justify-between px-4 py-4'>
           <div className='flex items-center gap-2'>
             <button onClick={handleClose} className='text-white'>
@@ -238,14 +316,15 @@ function PostDetailContent({
 
       {/* ══ DESKTOP ══ */}
       <div
-        className='hidden md:flex fixed inset-0 z-30 items-center justify-center bg-black/70 backdrop-blur-xl'
+        className='hidden md:flex fixed inset-0 z-30 items-center justify-center p-8 bg-black/70 backdrop-blur-xl'
         onClick={handleClose}
       >
         <div
-          className='flex w-[1100px] max-w-[95vw] h-[700px] max-h-[92vh] rounded-2xl overflow-hidden bg-[#0e0e13] border border-[rgba(255,255,255,0.08)] shadow-2xl'
+          className='flex w-full max-w-[1300px] h-full max-h-[700px] overflow-hidden bg-[#0e0e13] border border-[rgba(255,255,255,0.08)] shadow-2xl'
           onClick={(e) => e.stopPropagation()}
         >
-          <div className='relative w-[520px] shrink-0 bg-black'>
+          {/* Image */}
+          <div className='relative w-[750px] shrink-0'>
             <Image
               src={post.imageUrl}
               alt={post.caption || ''}
@@ -255,8 +334,10 @@ function PostDetailContent({
             />
           </div>
 
-          <div className='flex flex-col flex-1 min-w-0 bg-[#0e0e13]'>
-            <div className='flex items-center justify-between px-4 py-3 shrink-0 border-b border-[rgba(255,255,255,0.06)]'>
+          {/* Right Panel */}
+          <div className='flex flex-col flex-1 min-w-0'>
+            {/* Header */}
+            <div className='flex items-center justify-between px-4 py-3 shrink-0 border-b border-neutral-900'>
               <AuthorHeader post={post} />
               <div className='flex items-center gap-1'>
                 {isOwner && (
@@ -274,20 +355,19 @@ function PostDetailContent({
               </div>
             </div>
 
-            <div className='px-4 py-3 shrink-0'>
-              <span className='text-sm font-bold text-white mr-2'>
-                {post.author.name}
-              </span>
-              <span className='text-sm text-neutral-200'>{post.caption}</span>
+            {/* Caption */}
+            <div className='px-6 py-3 shrink-0 border-b border-neutral-900'>
+              <span className='text-sm text-white'>{post.caption}</span>
             </div>
 
-            {actionsBar}
-
+            {/* Comments List (scrollable) */}
             <div className='flex-1 overflow-hidden'>
               <CommentSection
                 postId={postId}
                 currentUserId={currentUserId}
                 inline
+                hideHeader
+                hideInput
                 onCommentAdded={() => setCommentCount((c) => c + 1)}
                 onCommentDeleted={() =>
                   setCommentCount((c) => Math.max(0, c - 1))
@@ -295,6 +375,15 @@ function PostDetailContent({
                 onDeleteRequest={(id) => setDeleteCommentId(id)}
               />
             </div>
+
+            {/* Actions Bar */}
+            {actionsBar}
+
+            {/* Input Bar */}
+            <DesktopCommentInput
+              postId={postId}
+              onCommentAdded={() => setCommentCount((c) => c + 1)}
+            />
           </div>
         </div>
       </div>
