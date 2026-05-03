@@ -114,7 +114,7 @@ export function ProfilePage({ username }: ProfilePageProps) {
       {/* ── Profile Header ── */}
       <div className='md:max-w-5xl md:mx-auto'>
         <div className='px-2 pt-6 pb-4 flex items-center gap-4 md:pt-10 md:pb-6 md:gap-3'>
-          <Avatar className='size-22 md:size-25'>
+          <Avatar className='size-20 md:size-23'>
             <AvatarImage src={profile.avatarUrl ?? ''} alt={profile.name} />
             <AvatarFallback className='text-2xl font-bold md:text-5xl'>
               {profile.name[0]}
