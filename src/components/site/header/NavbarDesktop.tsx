@@ -8,11 +8,13 @@ import { DesktopUserDropdown } from './DesktopUserDropdown';
 import { SearchBar } from '../search/SearchBar';
 
 import Logo from '@/public/assets/logo/Logo.svg';
-import type { User } from '@/types/user';
+import { User } from '@/types/user';
+import { AuthUser } from '@/types/auth';
+
 
 interface NavbarDesktopProps {
   isLoggedIn: boolean;
-  me?: User | null;
+  me?: AuthUser | null;
 
   // search
   query: string;
