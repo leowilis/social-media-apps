@@ -1,7 +1,7 @@
 import { api } from '@/lib/axios';
 import type { AuthUser } from '@/types/auth';
-import type { LoginFormData, RegisterFormData } from '@/schema/auth.scema';
-export type { LoginFormData, RegisterFormData } from '@/schema/auth.scema';
+import type { LoginFormData, RegisterFormData } from '@/schema/auth.schema';
+export type { LoginFormData, RegisterFormData } from '@/schema/auth.schema';
 
 // Response Shapes
 
