@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/input-group';
 import { Label } from '@/components/ui/label';
 
-import { registerSchema, type RegisterFormData } from '@/schema/auth.scema';
+import { registerSchema, type RegisterFormData } from '@/schema/auth.schema';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 import Logo from '@/public/assets/logo/Logo.svg';
