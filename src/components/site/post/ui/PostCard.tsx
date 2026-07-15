@@ -1,241 +1,101 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { IoPaperPlaneOutline } from 'react-icons/io5';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PostToast } from './PostToast';
-import { DeleteDialog } from './DeleteDialog';
-import { PostActionsBar } from './PostActionBar';
-import { CommentSection } from './CommentSection';
-import { LikesSheet } from '@/components/features/likes/LikesSheet';
-import { useToggleLike } from '@/hooks/post/useLike';
-import { useIsSaved, useToggleSave } from '@/hooks/post/useSave';
-import { useAppSelector } from '@/store/hooks';
 import type { Post } from '@/types/post';
 
-// Types
+import { usePostCard } from '@/hooks/post/usePostCard';
+
+import { PostToast } from './PostToast';
+import { PostActionsBar } from './PostActionBar';
+import PostHeader from './PostHeader';
+import PostImage from './PostImage';
+import PostCaption from './PostCaption';
+import PostDialogs from './PostDialog';
 
 interface PostCardProps {
   post: Post;
   currentUserId?: number;
 }
 
-// Helpers
-
-// Time Upload
-function timeAgo(dateStr: string): string {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return `${diff}Seconds ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}Minutes ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}Hours ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}Days ago`;
-  if (diff < 2592000) return `${Math.floor(diff / 604800)}Weeks ago`;
-  if (diff < 31536000) return `${Math.floor(diff / 2592000)}Months ago`;
-  return `${Math.floor(diff / 31536000)}Years ago`;
-}
-
-// Component
-
-/**
- * Post card shown in the feed.
- * Uses Redux as source of truth for liked/saved state.
- * Handles optimistic UI, comments sheet, likes sheet,
- * and desktop overlay navigation.
- */
 export function PostCard({ post, currentUserId }: PostCardProps) {
-  const router = useRouter();
-
-  const toggleLike = useToggleLike(post.id);
-  const toggleSave = useToggleSave(post.id);
-
-  // Redux as single source of truth — always reactive
-  const liked = useAppSelector((s) => s.likes.likedPostIds.includes(post.id));
-  const saved = useIsSaved(post.id);
-
-  const [commentCount, setCommentCount] = useState(post.commentCount);
-  const [showFull, setShowFull] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [showLikes, setShowLikes] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const [showToast, setShowToast] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-
-  const showNotif = (msg: string) => {
-    setToastMsg(msg);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2500);
-  };
-
-  const handleLike = () => {
-    toggleLike.mutate(liked, {
-      onError: () => {},
-    });
-  };
-
-  const handleSave = () => {
-    toggleSave.mutate(saved, {
-      onSuccess: () => showNotif(saved ? 'Removed from saved' : 'Post saved!'),
-      onError: () => showNotif('Something went wrong'),
-    });
-  };
-
-  const handleImageClickDesktop = (e: React.MouseEvent) => {
-    e.preventDefault();
-    router.push(
-      `?postId=${post.id}&liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`,
-      { scroll: false },
-    );
-  };
-
-  /** Desktop — open post detail overlay. Mobile — open comment sheet. */
-  const handleCommentClick = () => {
-    if (window.innerWidth >= 768) {
-      router.push(
-        `?postId=${post.id}&liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`,
-        { scroll: false },
-      );
-      return;
-    }
-    setShowComments(true);
-  };
-
-  const caption = post.caption ?? '';
-  const isLong = caption.length > 100;
-  const displayCaption =
-    !showFull && isLong ? caption.slice(0, 100) + '...' : caption;
+  const {
+    liked,
+    saved,
+    commentCount,
+    showFull,
+    showComments,
+    showLikes,
+    toastMsg,
+    showToast,
+    deleteTarget,
+    toggleLike,
+    toggleSave,
+    handleLike,
+    handleSave,
+    handleCommentClick,
+    handleDeleteConfirm,
+    toggleCaption,
+    openLikes,
+    closeLikes,
+    closeComments,
+    cancelDelete,
+    incrementComment,
+    decrementComment,
+    requestDeleteComment,
+  } = usePostCard(post);
 
   return (
     <>
       <PostToast message={toastMsg} show={showToast} />
 
-      {deleteTarget !== null && (
-        <DeleteDialog
-          title='Delete Comment?'
-          description='This comment will be permanently removed.'
-          onConfirm={() => {
-            window.dispatchEvent(
-              new CustomEvent('confirm-delete-comment', {
-                detail: deleteTarget,
-              }),
-            );
-            setDeleteTarget(null);
-          }}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
+      <article className='flex w-full flex-col'>
+        {/* Post Owner Meta Header Cell */}
+        <PostHeader author={post.author} createdAt={post.createdAt} />
 
-      <article className='flex flex-col w-full'>
-        {/* Author */}
-        <div className='flex items-center gap-3 px-4 py-3'>
-          <Link href={`/profile/${post.author.username}`}>
-            <Avatar className='size-10 border border-[rgba(126,145,183,0.32)]'>
-              <AvatarImage
-                src={post.author.avatarUrl ?? ''}
-                alt={post.author.name}
-              />
-              <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-            </Avatar>
-          </Link>
-          <div className='flex flex-col'>
-            <Link href={`/profile/${post.author.username}`}>
-              <span className='text-sm font-bold text-white'>
-                {post.author.name}
-              </span>
-            </Link>
-            <span className='text-xs text-neutral-400'>
-              {timeAgo(post.createdAt)}
-            </span>
-          </div>
-          <button className='ml-auto text-white'>
-            <IoPaperPlaneOutline className='size-5' />
-          </button>
-        </div>
+        {/* Responsive Multi-Device Media Viewport */}
+        <PostImage post={post} liked={liked} saved={saved} />
 
-        {/* Image — mobile: navigate, desktop: overlay */}
-        <Link
-          href={`/post/${post.id}?liked=${liked}&likeCount=${post.likeCount}&saved=${saved}`}
-          className='md:hidden'
-        >
-          <div className='relative w-full aspect-square overflow-hidden rounded-3xl'>
-            <Image
-              src={post.imageUrl}
-              alt={caption}
-              fill
-              className='object-cover'
-              sizes='100vw'
-            />
-          </div>
-        </Link>
-
-        <div
-          className='relative w-full aspect-square overflow-hidden rounded-3xl cursor-pointer hidden md:block md:rounded-md'
-          onClick={handleImageClickDesktop}
-        >
-          <Image
-            src={post.imageUrl}
-            alt={caption}
-            fill
-            className='object-cover'
-            sizes='(min-width: 768px) 600px, 100vw'
-          />
-        </div>
-
-        {/* Actions */}
+        {/* Interactive Social Engagement Actions & Likes Bar Component */}
         <PostActionsBar
           liked={liked}
-          likeCount={post.likeCount}
           saved={saved}
+          likeCount={post.likeCount}
           commentCount={commentCount}
           isPendingLike={toggleLike.isPending}
           isPendingSave={toggleSave.isPending}
           onLike={handleLike}
           onSave={handleSave}
-          onLikeCountClick={() => setShowLikes(true)}
+          onLikeCountClick={openLikes}
           onCommentClick={handleCommentClick}
         />
 
-        {/* Caption */}
-        <div className='px-4 py-2 pb-4'>
-          <p className='text-sm text-white font-bold mb-1'>
-            {post.author.name}
-          </p>
-          <p className='text-sm text-neutral-200'>
-            {displayCaption}
-            {isLong && (
-              <button
-                onClick={() => setShowFull((p) => !p)}
-                className='block text-[var(--primary-200)] font-semibold mt-1'
-              >
-                {showFull ? 'Show Less' : 'Show More'}
-              </button>
-            )}
-          </p>
-        </div>
+        {/* Text Caption Truncation Cell */}
+        <PostCaption
+          authorName={post.author.name}
+          caption={post.caption ?? ''}
+          showFull={showFull}
+          onToggle={toggleCaption}
+        />
 
-        <div className='h-px w-full bg-[rgba(126,145,183,0.1)]' />
+        {/* Breakline */}
+        <div className='h-px w-full bg-white/10' aria-hidden='true' />
       </article>
 
-      {showLikes && (
-        <LikesSheet
-          postId={post.id}
-          likeCount={post.likeCount}
-          onClose={() => setShowLikes(false)}
-        />
-      )}
-
-      {showComments && (
-        <CommentSection
-          postId={post.id}
-          currentUserId={currentUserId}
-          onClose={() => setShowComments(false)}
-          onCommentAdded={() => setCommentCount((p) => p + 1)}
-          onCommentDeleted={() => setCommentCount((p) => Math.max(0, p - 1))}
-          onDeleteRequest={(id) => setDeleteTarget(id)}
-        />
-      )}
+      {/* Unified Modals, Comment Sheets, and Delete Guard Interception Drawer Hub */}
+      <PostDialogs
+        postId={post.id}
+        likeCount={post.likeCount}
+        currentUserId={currentUserId}
+        showLikes={showLikes}
+        showComments={showComments}
+        deleteTarget={deleteTarget}
+        onCloseLikes={closeLikes}
+        onCloseComments={closeComments}
+        onDeleteCancel={cancelDelete}
+        onDeleteConfirm={handleDeleteConfirm}
+        onCommentAdded={incrementComment}
+        onCommentDeleted={decrementComment}
+        onDeleteRequest={requestDeleteComment}
+      />
     </>
   );
 }
