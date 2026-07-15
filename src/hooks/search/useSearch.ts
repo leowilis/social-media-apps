@@ -1,50 +1,34 @@
-import { useState, useCallback, useRef } from 'react';
-import { usersApi } from '@/lib/api/users';
-import { UserProfile } from '@/types/user';
+'use client';
 
-/**
- * Handles user search with debouncing.
- * Extracted from SearchOverlay so the component stays UI-only.
- */
-export function useSearch() {
-  const [query, setQuery] = useState('');
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+import { useState } from 'react';
+import { useSearchUsers } from '@/hooks/users/useSearchUsers';
+import { useDebounce } from '../useDebounce';
 
-  const search = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setUsers([]);
-      setSearched(false);
-      return;
-    }
-    setIsLoading(true);
-    setSearched(true);
-    try {
-      const res = await usersApi.searchUsers(q);
-      setUsers(res.data.data.users);
-    } catch {
-      setUsers([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+export function useSearch(initialQuery = '') {
+  const [query, setQuery] = useState(initialQuery);
+  const debouncedQuery = useDebounce(query);
+  const searched = debouncedQuery.trim().length > 0;
+  const searchQuery = debouncedQuery.trim();
 
-  const handleChange = useCallback(
-    (val: string) => {
-      setQuery(val);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => search(val), 350);
-    },
-    [search],
-  );
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useSearchUsers(searchQuery);
 
-  const clearQuery = useCallback(() => {
+  const clearQuery = () => {
     setQuery('');
-    setUsers([]);
-    setSearched(false);
-  }, []);
+  };
 
-  return { query, users, isLoading, searched, handleChange, clearQuery };
+  return {
+    query,
+    users,
+    searched,
+    isLoading: searched ? isLoading : false,
+    isError,
+    refetch,
+    handleChange: setQuery,
+    clearQuery,
+  };
 }
