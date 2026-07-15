@@ -1,11 +1,14 @@
-import Link from "next/link";
-import { IoSearchOutline, IoCloseOutline } from "react-icons/io5";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SearchResultsSkeleton } from "@/components/ui/skeletons";
+'use client';
 
-// Types
+import Link from 'next/link';
+import { IoCloseOutline, IoSearchOutline } from 'react-icons/io5';
 
-export interface SearchUser {
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SearchResultsSkeleton } from '@/components/ui/skeletons';
+import EmptyState from '@/components/common/EmptyState';
+
+interface SearchUser {
   id: number;
   username: string;
   name: string;
@@ -13,8 +16,6 @@ export interface SearchUser {
 }
 
 interface SearchBarProps {
-  /** "desktop" renders inline inside the Navbar. "mobile" is not used here — mobile is inlined in Navbar. */
-  variant: "desktop";
   query: string;
   users: SearchUser[];
   loading: boolean;
@@ -25,13 +26,7 @@ interface SearchBarProps {
   onSelectUser: () => void;
 }
 
-// Component
-
-/**
- * Desktop inline search bar with results dropdown.
- * Results show only when `showResults` is true (query is non-empty and input focused).
- */
-export function SearchBar({
+export default function SearchBar({
   query,
   users,
   loading,
@@ -42,92 +37,78 @@ export function SearchBar({
   onSelectUser,
 }: SearchBarProps) {
   return (
-    <div className="relative w-full max-w-[490px] mx-8">
-      {/* Input */}
+    <div className='relative mx-8 w-full max-w-[490px]'>
       <div
-        className="flex items-center gap-2 h-12 px-4 rounded-full border bg-neutral-950 transition-colors"
-        style={{
-          borderColor:
-            showResults && query
-              ? "rgba(124,92,252,0.4)"
-              : "rgb(23,23,23)",
-        }}
+        className={cn(
+          'flex h-12 items-center gap-2 rounded-full bg-neutral-950 px-4 transition-colors',
+          showResults && query
+            ? 'border border-primary-400/40'
+            : 'border border-neutral-800',
+        )}
       >
-        <IoSearchOutline className="size-[18px] shrink-0 text-neutral-500" />
+        <IoSearchOutline className='size-[18px] shrink-0 text-neutral-500' />
         <input
+          type='text'
+          role='searchbox'
           value={query}
           onFocus={onFocus}
           onChange={(e) => onQueryChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Escape") onClear();
+            if (e.key === 'Escape') onClear();
           }}
-          placeholder="Search users..."
-          aria-label="Search users"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-neutral-500 outline-none"
+          placeholder='Search users...'
+          className='flex-1 bg-transparent text-sm text-white placeholder:text-neutral-500 outline-none'
         />
+
         {query && (
           <button
-            type="button"
+            type='button'
+            aria-label='Clear search'
             onClick={onClear}
-            aria-label="Clear search"
+            className='rounded-full p-1 transition-colors hover:bg-white/10'
           >
-            <IoCloseOutline className="size-4 text-neutral-500" />
+            <IoCloseOutline className='size-4 text-neutral-500' />
           </button>
         )}
       </div>
 
-      {/* Results dropdown */}
       {showResults && (
         <>
-          {/* Backdrop to close on outside click */}
           <div
-            className="fixed inset-0 z-30"
+            aria-hidden='true'
+            className='fixed inset-0 z-30'
             onClick={onClear}
-            aria-hidden="true"
           />
-          <div
-            className="absolute top-14 left-0 right-0 z-40 rounded-2xl overflow-hidden"
-            style={{
-              background: "rgba(10,10,18,0.98)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.6)",
-            }}
-          >
+          <div className='absolute left-0 right-0 top-14 z-40 overflow-hidden rounded-2xl border border-white/10 bg-black/95 shadow-2xl'>
             {loading ? (
               <SearchResultsSkeleton count={4} />
             ) : users.length === 0 ? (
-              <div className="flex flex-col items-center py-8 gap-1">
-                <p className="text-sm font-semibold text-neutral-400">
-                  No results found
-                </p>
-                <p className="text-xs text-neutral-600">Try a different keyword</p>
-              </div>
+              <EmptyState
+                title='No results found'
+                description='Try another keyword'
+              />
             ) : (
-              <div className="px-2 py-2 space-y-0.5 max-h-80 overflow-y-auto">
+              <div className='max-h-80 space-y-0.5 overflow-y-auto px-2 py-2'>
                 {users.map((user) => (
                   <Link
                     key={user.id}
                     href={`/profile/${user.username}`}
                     onClick={onSelectUser}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] transition-colors"
+                    className='flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/5'
                   >
-                    <Avatar
-                      className="size-9 shrink-0"
-                      style={{ border: "1.5px solid rgba(124,92,252,0.2)" }}
-                    >
-                      <AvatarImage src={user.avatarUrl ?? ""} alt={user.name} />
-                      <AvatarFallback
-                        className="text-sm font-bold"
-                        style={{ background: "#1a1a2e", color: "#a78bff" }}
-                      >
-                        {user.name[0]}
+                    <Avatar className='size-9 shrink-0 border border-primary-400/20'>
+                      <AvatarImage src={user.avatarUrl ?? ''} alt={user.name} />
+                      <AvatarFallback className='bg-black text-sm font-bold text-primary-400'>
+                        {user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-white truncate">
+
+                    <div className='min-w-0'>
+                      <p className='truncate text-sm font-bold text-white'>
                         {user.name}
                       </p>
-                      <p className="text-xs text-neutral-500 truncate">
+
+                      <p className='truncate text-xs text-neutral-500'>
                         @{user.username}
                       </p>
                     </div>
