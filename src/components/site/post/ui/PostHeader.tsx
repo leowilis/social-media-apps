@@ -18,6 +18,15 @@ interface PostHeaderProps {
 export default function PostHeader({ author, createdAt }: PostHeaderProps) {
   const created = dayjs(createdAt);
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: author.name,
+        url: window.location.href,
+      });
+    }
+  };
+
   return (
     <div className='flex items-center gap-3 px-4 py-3 select-none'>
       {/* Profile Photo Link Wrapper */}
@@ -50,10 +59,11 @@ export default function PostHeader({ author, createdAt }: PostHeaderProps) {
       {/* Share feature */}
       <button
         type='button'
-        aria-label={`Share or forward this post by ${author.name}`}
+        onClick={handleShare}
+        aria-label={`Share post by ${author.name}`}
         className='ml-auto text-white transition-opacity hover:opacity-70'
       >
-        <IoPaperPlaneOutline className='size-5' aria-hidden='true' />
+        <IoPaperPlaneOutline className='size-5' />
       </button>
     </div>
   );
