@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -48,6 +48,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-surface: var(--surface);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -69,6 +70,10 @@
   --color-accent-red: #d9206e;
   --color-accent-green: #079455;
   --color-accent-yellow: #fdb022;
+
+  --color-surface: #08080f;
+  --color-surface2: #0b0d12;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -103,7 +108,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -136,7 +140,6 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  
 }
 
 @layer base {
@@ -145,9 +148,45 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: black;
     font-family: var(--font-sfpro);
   }
+}
+
+@keyframes search-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes search-item {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-search-overlay {
+  animation: search-slide-down 0.2s ease;
+}
+
+.animate-search-item {
+  animation: search-item 0.18s ease forwards;
+  -webkit-animation: search-item 0.18s ease forwards;
+}
+
+.avatar-border {
+  border-width: 1.5px;
 }
 
 input:-webkit-autofill,
