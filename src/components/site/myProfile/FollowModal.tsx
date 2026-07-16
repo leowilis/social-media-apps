@@ -3,7 +3,7 @@
 import FollowModalHeader from './FollowModalHeader';
 import LoadingState from '@/components/common/LoadingState';
 import EmptyState from '@/components/common/EmptyState';
-import FollowUserItem from './FollowUseItem';
+import FollowUserItem from './FollowUserItem';
 import { useEffect } from 'react';
 
 export interface ModalUser {
