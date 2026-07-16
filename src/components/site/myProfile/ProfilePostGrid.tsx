@@ -5,13 +5,13 @@ import GridItem from './GridItem';
 
 interface ProfilePostGridProps {
   posts: Post[];
-  isSaved: boolean;
+  isSaved?: boolean;
   onPostClick?: (postId: number) => void;
 }
 
 export default function ProfilePostGrid({
   posts,
-  isSaved,
+  isSaved = false,
   onPostClick,
 }: ProfilePostGridProps) {
   return (
