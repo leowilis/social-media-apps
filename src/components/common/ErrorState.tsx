@@ -16,13 +16,7 @@ export default function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className='flex flex-col items-center justify-center py-24 text-center'>
-      <div
-        className='mb-4 flex size-16 items-center justify-center rounded-2xl'
-        style={{
-          background: 'rgba(239,68,68,.08)',
-          border: '1px solid rgba(239,68,68,.15)',
-        }}
-      >
+      <div className='mb-4 flex size-16 items-center justify-center rounded-2xl border border-red-500/15 bg-red-500/10'>
         <AlertCircle className='size-7 text-red-500' />
       </div>
       <h3 className='text-sm font-bold text-white'>{title}</h3>
