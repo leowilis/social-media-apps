@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { IoLogOutOutline } from 'react-icons/io5';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,12 +16,7 @@ interface DesktopUserDropdownProps {
   onLogout: () => void;
 }
 
-/**
- * Desktop user dropdown menu
- * - Accessible
- * - Clean separation (config vs UI)
- * - Handles outside click & escape key
- */
+// Desktop user dropdown menu
 export function DesktopUserDropdown({
   me,
   open,
@@ -30,100 +25,117 @@ export function DesktopUserDropdown({
   onLogout,
 }: DesktopUserDropdownProps) {
   const avatarFallback = getAvatarFallback(me?.name);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstItemRef = useRef<HTMLAnchorElement>(null);
 
-  // ESC to close
   useEffect(() => {
     if (!open) return;
 
+    firstItemRef.current?.focus();
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        onClose();
+        requestAnimationFrame(() => {
+          triggerRef.current?.focus();
+        });
+      }
     };
-
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+    };
   }, [open, onClose]);
+
+  const handleClose = () => {
+    onClose();
+    requestAnimationFrame(() => {
+      triggerRef.current?.focus();
+    });
+  };
 
   return (
     <div className='relative shrink-0'>
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type='button'
         onClick={onToggle}
         aria-expanded={open}
         aria-haspopup='menu'
         aria-controls='user-menu'
-        className='flex items-center gap-3 cursor-pointer'
+        className='flex cursor-pointer items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-primary-400'
       >
-        <Avatar className='size-12 border border-[rgba(126,145,183,0.32)]'>
+        <Avatar className='size-12 border border-white/20'>
           <AvatarImage src={me?.avatarUrl ?? ''} alt={me?.name} />
           <AvatarFallback>{avatarFallback}</AvatarFallback>
         </Avatar>
         <span className='text-sm font-semibold text-white'>{me?.name}</span>
       </button>
-
-      {/* Dropdown */}
       {open && (
         <>
           {/* Backdrop */}
           <div
             className='fixed inset-0 z-40'
-            onClick={onClose}
+            onClick={handleClose}
+            aria-hidden='true'
           />
 
+          {/* Dropdown */}
           <div
             id='user-menu'
             role='menu'
-            className='absolute right-0 top-14 z-50 w-56 rounded-2xl overflow-hidden'
-            style={{
-              background: 'rgba(10,10,18,0.98)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
-            }}
+            aria-label='User menu'
+            className='absolute right-0 top-14 z-50 w-56 overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/95 shadow-2xl backdrop-blur-md'
           >
             {/* Header */}
-            <div className='flex items-center gap-3 px-4 py-3 border-b border-[rgba(255,255,255,0.06)]'>
-              <Avatar className='size-9 border border-[rgba(126,145,183,0.32)]'>
+            <div className='flex items-center gap-3 border-b border-white/5 px-4 py-3'>
+              <Avatar className='size-9 border border-white/20'>
                 <AvatarImage src={me?.avatarUrl ?? ''} alt={me?.name} />
+
                 <AvatarFallback className='text-sm font-bold'>
                   {avatarFallback}
                 </AvatarFallback>
               </Avatar>
 
-              <div className='flex flex-col min-w-0'>
-                <span className='font-bold text-white text-sm truncate'>
+              <div className='flex min-w-0 flex-col'>
+                <span className='truncate text-sm font-bold text-white'>
                   {me?.name}
                 </span>
-                <span className='text-xs text-neutral-500 truncate'>
+
+                <span className='truncate text-xs text-neutral-500'>
                   @{me?.username}
                 </span>
               </div>
             </div>
 
-            {/* Menu items */}
+            {/* Menu */}
             <div className='px-2 py-2'>
-              {DROPDOWN_ITEMS.map(({ href, label, icon: Icon }) => (
+              {DROPDOWN_ITEMS.map(({ href, label, icon: Icon }, index) => (
                 <Link
                   key={label}
+                  ref={index === 0 ? firstItemRef : undefined}
                   role='menuitem'
                   href={href}
-                  onClick={onClose}
-                  className='flex items-center gap-3 px-3 py-2.5 rounded-xl text-white hover:bg-white/[0.05] transition-colors'
+                  onClick={handleClose}
+                  className='flex items-center gap-3 rounded-xl px-3 py-2.5 text-white transition-colors hover:bg-white/5 focus:bg-white/5 focus:outline-none'
                 >
                   <Icon className='size-4 text-neutral-500' />
+
                   <span className='text-sm font-semibold'>{label}</span>
                 </Link>
               ))}
             </div>
 
             {/* Logout */}
-            <div className='px-2 pb-2 border-t border-[rgba(255,255,255,0.06)] pt-2'>
+            <div className='border-t border-white/5 px-2 pb-2 pt-2'>
               <button
-                role='menuitem'
                 type='button'
+                role='menuitem'
                 onClick={onLogout}
-                className='flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors'
+                className='flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-red-400 transition-colors hover:bg-red-500/10 focus:bg-red-500/10 focus:outline-none'
               >
                 <IoLogOutOutline className='size-4' />
+
                 <span className='text-sm font-semibold'>Logout</span>
               </button>
             </div>
@@ -135,8 +147,8 @@ export function DesktopUserDropdown({
 }
 
 /**
- * Small helper
+ * Returns avatar initials.
  */
 function getAvatarFallback(name?: string) {
-  return name?.[0]?.toUpperCase() ?? '';
+  return name?.trim().charAt(0).toUpperCase() || '?';
 }
