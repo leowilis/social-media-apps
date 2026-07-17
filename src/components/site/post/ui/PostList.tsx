@@ -3,86 +3,90 @@
 import { useEffect, useRef } from 'react';
 import { useFeed } from '@/hooks/post/useFeed';
 import { useMe } from '@/hooks/profile/useMe';
+import EmptyState from '@/components/common/EmptyState';
+import ErrorState from '@/components/common/ErrorState';
+import { FeedSkeleton } from '@/components/ui/skeletons';
 import { PostCard } from './PostCard';
-import { PostCardSkeleton } from '@/components/ui/skeletons';
 
-// Sub-components
-
-function EmptyState() {
-  return (
-    <div className='flex flex-col items-center justify-center py-24 gap-2 text-center'>
-      <p className='text-sm font-bold text-neutral-300'>No posts yet</p>
-      <p className='text-xs text-neutral-600'>
-        Follow someone to see their posts here
-      </p>
-    </div>
-  );
-}
-
-function ErrorState() {
-  return (
-    <div className='flex items-center justify-center py-20 text-neutral-500 text-sm'>
-      Failed to load posts. Please try again.
-    </div>
-  );
-}
-
-// Component
-
-/**
- * Renders an infinite-scrolling list of posts for the feed.
- * Handles loading, empty, and error states.
- */
+// Displays the authenticated user's feed with infinite scrolling.
 export function PostList() {
-  const { posts, isLoading, isError, hasMore, loadMore } = useFeed();
+  const { posts, isLoading, isError, hasMore, loadMore, isFetchingNextPage } =
+    useFeed();
+
   const { me } = useMe();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const target = bottomRef.current;
+
+    if (!target) return;
+
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !isFetchingNextPage) {
           loadMore();
         }
       },
-      { threshold: 0.5 },
+      {
+        rootMargin: '120px',
+        threshold: 0,
+      },
     );
-    if (bottomRef.current) observer.observe(bottomRef.current);
+
+    observer.observe(target);
+
     return () => observer.disconnect();
-  }, [hasMore, isLoading, loadMore]);
+  }, [hasMore, isFetchingNextPage, loadMore]);
 
   if (isLoading) {
+    return <FeedSkeleton />;
+  }
+
+  if (isError) {
     return (
-      <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
-        {[1, 2, 3].map((i) => (
-          <PostCardSkeleton key={i} />
-        ))}
-      </div>
+      <ErrorState
+        title='Failed to load posts'
+        description='Please try again later.'
+      />
     );
   }
 
-  if (isError) return <ErrorState />;
-  if (posts.length === 0) return <EmptyState />;
+  if (!posts.length) {
+    return (
+      <EmptyState
+        title='Your feed is empty'
+        description='Follow other users to start seeing posts here.'
+      />
+    );
+  }
 
   return (
-    <div className='flex flex-col md:max-w-[720px] md:mx-auto md:w-full'>
+    <main
+      role='feed'
+      aria-label='Feed'
+      className='flex flex-col md:mx-auto md:w-full md:max-w-[720px]'
+    >
       {posts.map((post) => (
         <PostCard key={post.id} post={post} currentUserId={me?.id} />
       ))}
 
-      <div ref={bottomRef} className='h-4' />
+      <div ref={bottomRef} className='h-4' aria-hidden='true' />
 
-      {isLoading && (
-        <div className='flex justify-center py-6'>
-          <div className='size-6 rounded-full border-2 border-[var(--primary-200)] border-t-transparent animate-spin' />
+      {isFetchingNextPage && (
+        <div
+          role='status'
+          aria-label='Loading more posts'
+          className='flex justify-center py-6'
+        >
+          <div className='size-5 rounded-full border-2 border-primary-400 border-t-transparent animate-spin' />
         </div>
       )}
 
-      {!hasMore && posts.length > 0 && (
-        <p className='text-center text-xs text-neutral-500 py-6'>
-          No more posts
+      {!hasMore && (
+        <p className='py-6 text-center text-xs text-neutral-500'>
+          You&apos;re all caught up.
         </p>
       )}
-    </div>
+    </main>
   );
 }
