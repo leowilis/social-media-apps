@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+
 import { useToggleLike } from '@/hooks/post/useLike';
 import { useToggleSave, useIsSaved } from '@/hooks/post/useSave';
 import { useAppSelector } from '@/store/hooks';
+
 import type { Post } from '@/types/post';
 
 export function usePostCard(post: Post) {
@@ -19,12 +20,22 @@ export function usePostCard(post: Post) {
   );
 
   const saved = useIsSaved(post.id);
-
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [showToast, setShowToast] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const showNotif = (message: string) => {
+    setToastMsg(message);
+    setShowToast(true);
+
+    setTimeout(() => {
+      setShowToast(false);
+    }, 2500);
+  };
 
   const handleLike = () => {
     toggleLike.mutate(liked);
@@ -32,14 +43,8 @@ export function usePostCard(post: Post) {
 
   const handleSave = () => {
     toggleSave.mutate(saved, {
-      onSuccess: () => {
-        toast.success(
-          saved ? 'Removed from saved' : 'Post added to your collection!',
-        );
-      },
-      onError: () => {
-        toast.error('Failed to update bookmark.');
-      },
+      onSuccess: () => showNotif(saved ? 'Removed from saved' : 'Post saved!'),
+      onError: () => showNotif('Something went wrong'),
     });
   };
 
@@ -52,22 +57,6 @@ export function usePostCard(post: Post) {
     );
   };
 
-  const openComments = () => {
-    setShowComments(true);
-  };
-
-  const closeComments = () => {
-    setShowComments(false);
-  };
-
-  const openLikes = () => {
-    setShowLikes(true);
-  };
-
-  const closeLikes = () => {
-    setShowLikes(false);
-  };
-
   const handleCommentClick = () => {
     if (window.innerWidth >= 768) {
       openDesktopPost();
@@ -75,6 +64,18 @@ export function usePostCard(post: Post) {
     }
 
     openComments();
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteTarget == null) return;
+
+    window.dispatchEvent(
+      new CustomEvent('confirm-delete-comment', {
+        detail: deleteTarget,
+      }),
+    );
+
+    setDeleteTarget(null);
   };
 
   const toggleCaption = () => {
@@ -93,55 +94,50 @@ export function usePostCard(post: Post) {
     setDeleteTarget(id);
   };
 
+  const openLikes = () => {
+    setShowLikes(true);
+  };
+
+  const closeLikes = () => {
+    setShowLikes(false);
+  };
+
+  const openComments = () => {
+    setShowComments(true);
+  };
+
+  const closeComments = () => {
+    setShowComments(false);
+  };
+
   const cancelDelete = () => {
     setDeleteTarget(null);
   };
 
-  const handleDeleteConfirm = () => {
-    if (deleteTarget == null) return;
-
-    window.dispatchEvent(
-      new CustomEvent('confirm-delete-comment', {
-        detail: deleteTarget,
-      }),
-    );
-
-    setDeleteTarget(null);
-  };
-
   return {
-    // state
     liked,
     saved,
     commentCount,
     showFull,
     showComments,
     showLikes,
+    toastMsg,
+    showToast,
     deleteTarget,
-
-    // loading state
-    isPendingLike: toggleLike.isPending,
-    isPendingSave: toggleSave.isPending,
-
-    // handlers
+    toggleLike,
+    toggleSave,
     handleLike,
     handleSave,
     handleCommentClick,
     handleDeleteConfirm,
     toggleCaption,
-
-    // modal controls
     openLikes,
     closeLikes,
     openComments,
     closeComments,
-
-    // comment controls
+    cancelDelete,
     incrementComment,
     decrementComment,
-
-    // delete controls
     requestDeleteComment,
-    cancelDelete,
   };
 }
