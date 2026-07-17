@@ -56,11 +56,11 @@ export function useLikePost({ postId, initialLikeCount }: UseLikePostProps) {
     },
   });
 
-  const handleLike = useCallback(() => {
+  const handleLike = () => {
     if (mutation.isPending) return;
 
     mutation.mutate(liked);
-  }, [liked, mutation.isPending, mutation.mutate]);
+  };
 
   return {
     liked,
