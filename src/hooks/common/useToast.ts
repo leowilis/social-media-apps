@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useToast(duration = 2500) {
   const [message, setMessage] = useState('');
   const [show, setShow] = useState(false);
-  const open = (text: string) => {
-    setMessage(text);
-    setShow(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    setTimeout(() => {
-      setShow(false);
-    }, duration);
-  };
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
+  const open = useCallback(
+    (text: string) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      setMessage(text);
+      setShow(true);
+
+      timerRef.current = setTimeout(() => {
+        setShow(false);
+      }, duration);
+    },
+    [duration],
+  );
 
   return {
     message,
