@@ -1,4 +1,4 @@
-import { IoTrashOutline } from "react-icons/io5";
+import { IoTrashOutline } from 'react-icons/io5';
 
 interface DeleteDialogProps {
   title: string;
@@ -23,50 +23,44 @@ export function DeleteDialog({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-[998] bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div
+        className='fixed inset-0 z-[998] bg-black/70 backdrop-blur-sm'
+        onClick={onCancel}
+      />
 
       {/* Modal */}
-      <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999] w-[85vw] max-w-xs rounded-3xl overflow-hidden"
-        style={{
-          background: "linear-gradient(160deg, rgba(20,20,32,0.99) 0%, rgba(10,10,18,1) 100%)",
-          border: "1px solid rgba(255,255,255,0.07)",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.7)",
-        }}
-      >
-        <div className="flex justify-center pt-6 pb-2">
-          <div
-            className="flex items-center justify-center size-14 rounded-2xl"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)" }}
-          >
-            <IoTrashOutline className="size-7 text-red-400" />
+      <div className='fixed top-1/2 left-1/2 z-[999] w-[85vw] max-w-xs -translate-x-1/2 -translatte-y-1/2 overflow-hidden rounded-3xl border boder-white/10 bg-surface/95 shadow-2xl backdrop-blur-xl'>
+        <div className='flex justify-center pt-6 pb-2'>
+          <div className='flex items-center justify-center size-14 rounded-2xl border border-red-500/20 bg-red-500/10'>
+            <IoTrashOutline className='size-7 text-red-400' />
           </div>
         </div>
 
-        <div className="px-6 py-3 text-center">
-          <p className="text-base font-bold text-white mb-1">{title}</p>
-          <p className="text-sm text-neutral-500 leading-relaxed">{description}</p>
+        <div className='px-6 py-3 text-center'>
+          <p className='text-base font-bold text-white mb-1'>{title}</p>
+          <p className='text-sm text-neutral-500 leading-relaxed'>
+            {description}
+          </p>
         </div>
 
-        <div className="flex gap-2.5 px-5 pb-5 pt-2">
+        <div className='flex gap-2.5 px-5 pb-5 pt-2'>
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+            className='flex-1 py-3 rounded-2xl border border-white/10 bg-white/5 text-sm font-bold text-white transition-all hover-bg-white/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95 flex items-center justify-center disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #f87171 0%, #ef4444 100%)", boxShadow: "0 4px 16px rgba(239,68,68,0.35)" }}
+            className='flex flex-1 items-center justify-center rounded-2xl bg-red-500 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-red-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            {loading
-              ? <div className="size-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              : "Delete"
-            }
+            {loading ? (
+              <div className='size-4 rounded-full border-2 border-white border-t-transparent animate-spin' />
+            ) : (
+              'Delete'
+            )}
           </button>
         </div>
       </div>
