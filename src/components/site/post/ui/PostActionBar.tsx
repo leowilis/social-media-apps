@@ -1,24 +1,22 @@
 import {
-  IoHeartOutline, IoHeart,
+  IoHeartOutline,
+  IoHeart,
   IoChatbubbleOutline,
-  IoBookmarkOutline, IoBookmark,
-} from "react-icons/io5";
+  IoBookmarkOutline,
+  IoBookmark,
+} from 'react-icons/io5';
 
 interface PostActionsBarProps {
   liked: boolean;
   likeCount: number;
   saved: boolean;
   commentCount: number;
-  /** Disables the like button while the request is in flight. */
   isPendingLike: boolean;
-  /** Disables the save button while the request is in flight. */
   isPendingSave: boolean;
   onLike: () => void;
   onSave: () => void;
-  /** Clicking the like count opens the "Liked by" sheet. */
   onLikeCountClick: () => void;
   onCommentClick?: () => void;
-  /** Set to false to hide the comment button (e.g. desktop inline view). */
   showCommentButton?: boolean;
 }
 
@@ -40,34 +38,77 @@ export function PostActionsBar({
   showCommentButton = true,
 }: PostActionsBarProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.06)]">
-      <div className="flex items-center gap-4">
-
+    <div className='flex items-center justify-between px-4 py-3 border-b border-white/5 select-none'>
+      <div className='flex items-center gap-4'>
         {/* Like */}
-        <div className="flex items-center gap-1">
-          <button onClick={onLike} disabled={isPendingLike} className="text-white disabled:opacity-60 transition-opacity">
-            {liked ? <IoHeart className="size-6 text-red-500" /> : <IoHeartOutline className="size-6" />}
+        <div className='flex items-center gap-1'>
+          <button
+            type='button'
+            onClick={onLike}
+            disabled={isPendingLike}
+            aria-label={liked ? 'Unlike post' : 'Like post'}
+            className='text-white disabled:opacity-60 transition-all cursor-pointer'
+          >
+            {liked ? (
+              <IoHeart
+                className='size-6 text-red-500 animate-in heart-pop'
+                aria-hidden='true'
+              />
+            ) : (
+              <IoHeartOutline
+                className='size-6 text-neutral-300 hover:text-white transition-colors'
+                aria-hidden='true'
+              />
+            )}
           </button>
-          <button onClick={onLikeCountClick} className="text-sm text-white min-w-[16px] text-left">
+          <button
+            type='button'
+            aria-label='View likes'
+            onClick={onLikeCountClick}
+            className='text-xs font-bold text-neutral-200 tracking-tight cursor-pointer hover:text-primary-300 transition-colors outline-none focus-visible:underline disabled:cursor-default disabled:hover:text-neutral-200 tabular-nums shrink-0 pt-0.5'
+          >
             {likeCount}
           </button>
         </div>
 
         {/* Comment */}
         {showCommentButton && (
-          <button onClick={onCommentClick} className="flex items-center gap-1 text-white">
-            <IoChatbubbleOutline className="size-6" />
-            <span className="text-sm">{commentCount}</span>
+          <button
+            type='button'
+            aria-label='View comments'
+            onClick={onCommentClick}
+            className='flex items-center gap-1 text-white cursor-pointer'
+          >
+            <IoChatbubbleOutline
+              className='size-6 group-hover:text-white transition-colors'
+              aria-hidden='true'
+            />
+            <span className='text-xs font-bold tracking-tight tabular-nums pt-0.5'>
+              {commentCount}
+            </span>
           </button>
         )}
       </div>
 
       {/* Save */}
-      <button onClick={onSave} disabled={isPendingSave} className="text-white transition-transform active:scale-90 disabled:opacity-60">
-        {saved
-          ? <IoBookmark className="size-6" style={{ color: "#a78bff", filter: "drop-shadow(0 0 6px rgba(167,139,255,0.7))" }} />
-          : <IoBookmarkOutline className="size-6" />
-        }
+      <button
+        type='button'
+        onClick={onSave}
+        disabled={isPendingSave}
+        aria-label={saved ? 'Remove from saved' : 'Save post'}
+        className='text-white shrink-0 p-0.5 rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-primary-400 transition-all hover:scale-105 active:scale-90 disabled:opacity-40 cursor-pointer'
+      >
+        {saved ? (
+          <IoBookmark
+            className='text-primary-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.3)] animate-in pop-in'
+            aria-hidden='true'
+          />
+        ) : (
+          <IoBookmarkOutline
+            className='size-6 text-neutral-300 hover:text-white transition-colors'
+            aria-hidden='true'
+          />
+        )}
       </button>
     </div>
   );
