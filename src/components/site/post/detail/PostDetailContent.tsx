@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
 import { DeleteDialog } from '@/components/site/post/ui/DeleteDialog';
 import { PostActionsBar } from '@/components/site/post/ui/PostActionBar';
-import { PostToast } from '@/components/site/post/ui/PostToast';
 
 import { usePostActions } from '@/hooks/post/usePostActions';
 
@@ -38,7 +37,6 @@ export function PostDetailContent({
     liked,
     likeCount,
     saved,
-    toast,
     isPendingLike,
     isPendingSave,
     isDeletingPost,
@@ -85,8 +83,6 @@ export function PostDetailContent({
 
   return (
     <>
-      <PostToast message={toast.message} show={toast.show} />
-
       {showLikes && (
         <LikesSheet
           postId={postId}
