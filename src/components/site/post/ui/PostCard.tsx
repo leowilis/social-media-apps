@@ -4,7 +4,6 @@ import type { Post } from '@/types/post';
 
 import { usePostCard } from '@/hooks/post/usePostCard';
 
-import { PostToast } from './PostToast';
 import { PostActionsBar } from './PostActionBar';
 import PostHeader from './PostHeader';
 import PostImage from './PostImage';
@@ -24,8 +23,6 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
     showFull,
     showComments,
     showLikes,
-    toastMsg,
-    showToast,
     deleteTarget,
     toggleLike,
     toggleSave,
@@ -45,8 +42,6 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
 
   return (
     <>
-      <PostToast message={toastMsg} show={showToast} />
-
       <article className='flex w-full flex-col'>
         {/* Post Owner Meta Header Cell */}
         <PostHeader author={post.author} createdAt={post.createdAt} />
@@ -54,7 +49,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
         {/* Responsive Multi-Device Media Viewport */}
         <PostImage post={post} liked={liked} saved={saved} />
 
-        {/* Interactive Social Engagement Actions & Likes Bar Component */}
+        {/* Interactive Social Engagement Actions */}
         <PostActionsBar
           liked={liked}
           saved={saved}
@@ -68,7 +63,7 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
           onCommentClick={handleCommentClick}
         />
 
-        {/* Text Caption Truncation Cell */}
+        {/* Caption */}
         <PostCaption
           authorName={post.author.name}
           caption={post.caption ?? ''}
@@ -76,11 +71,9 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
           onToggle={toggleCaption}
         />
 
-        {/* Breakline */}
         <div className='h-px w-full bg-white/10' aria-hidden='true' />
       </article>
 
-      {/* Unified Modals, Comment Sheets, and Delete Guard Interception Drawer Hub */}
       <PostDialogs
         postId={post.id}
         likeCount={post.likeCount}
