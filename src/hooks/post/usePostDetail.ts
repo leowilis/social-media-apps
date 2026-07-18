@@ -1,29 +1,33 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+
 import { postsApi } from '@/lib/api/posts';
-import { postKeys } from './usePosts';
+import { postKeys } from './key';
 import { useAppSelector } from '@/store/hooks';
+
 import type { Post } from '@/types/post';
 
 /**
  * Fetches a single post by ID.
- * Query is skipped if postId is null.
- * Overrides likedByMe from Redux likes slice
- * since backend always returns likedByMe: false.
+ * Query is skipped until a valid postId is provided.
  */
 export function usePostDetail(postId: number | null) {
-  const likedPostIds = useAppSelector((s) => s.likes.likedPostIds);
-  const savedPostIds = useAppSelector((s) => s.saves.savedPostIds);
+  const likedPostIds = useAppSelector((state) => state.likes.likedPostIds);
+  const savedPostIds = useAppSelector((state) => state.saves.savedPostIds);
 
   const query = useQuery<Post>({
-    queryKey: postKeys.detail(postId!),
-    queryFn: async () => {
-      const res = await postsApi.getPost(postId!);
-      return res.data.data;
-    },
+    queryKey: postId ? postKeys.detail(postId) : ['posts', 'detail', 'pending'],
     enabled: postId !== null,
     staleTime: 0,
+    queryFn: async () => {
+      if (postId === null) {
+        throw new Error('Post ID is required.');
+      }
+
+      const res = await postsApi.getPost(postId);
+      return res.data.data;
+    },
   });
 
   const post = query.data
@@ -38,5 +42,7 @@ export function usePostDetail(postId: number | null) {
     post,
     isLoading: query.isLoading,
     isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
   };
 }
