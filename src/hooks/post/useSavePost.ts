@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { savesApi } from '@/lib/api/saves';
 import { meKeys } from '@/hooks/profile/key';
@@ -11,15 +12,8 @@ interface UseSavePostProps {
   postId: number;
 }
 
-interface UseSavePostOptions {
-  onSuccess?: (message: string) => void;
-}
-
 // Handles save and unsave actions for a post.
-export function useSavePost(
-  { postId }: UseSavePostProps,
-  { onSuccess }: UseSavePostOptions = {},
-) {
+export function useSavePost({ postId }: UseSavePostProps) {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
 
@@ -36,11 +30,13 @@ export function useSavePost(
     },
 
     onSuccess: (_data, wasSaved) => {
-      onSuccess?.(wasSaved ? 'Removed from saved' : 'Post saved!');
+      toast.success(wasSaved ? 'Removed from saved' : 'Post saved!');
     },
 
     onError: (_error, wasSaved) => {
       dispatch(wasSaved ? addSave(postId) : removeSave(postId));
+
+      toast.error('Failed to update saved posts.');
     },
 
     onSettled: async () => {
