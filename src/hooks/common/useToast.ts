@@ -1,31 +1,29 @@
 'use client';
 
-import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 export function useToast() {
-  return useMemo(
-    () => ({
-      open: (message: string) => {
-        toast.success(message);
-      },
+  const success = (message: string) => {
+    toast.success(message);
+  };
 
-      success: (message: string) => {
-        toast.success(message);
-      },
+  const error = (message: string) => {
+    toast.error(message);
+  };
 
-      error: (message: string) => {
-        toast.error(message);
-      },
+  const warning = (message: string) => {
+    toast.warning(message);
+  };
 
-      warning: (message: string) => {
-        toast.warning(message);
-      },
+  const info = (message: string) => {
+    toast.info(message);
+  };
 
-      info: (message: string) => {
-        toast.info(message);
-      },
-    }),
-    [],
-  );
+  return {
+    open: success,
+    success,
+    error,
+    warning,
+    info,
+  };
 }
