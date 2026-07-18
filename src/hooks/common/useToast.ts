@@ -1,38 +1,31 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { toast } from 'sonner';
 
-export function useToast(duration = 2500) {
-  const [message, setMessage] = useState('');
-  const [show, setShow] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+export function useToast() {
+  return useMemo(
+    () => ({
+      open: (message: string) => {
+        toast.success(message);
+      },
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
+      success: (message: string) => {
+        toast.success(message);
+      },
 
-  const open = useCallback(
-    (text: string) => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      setMessage(text);
-      setShow(true);
+      error: (message: string) => {
+        toast.error(message);
+      },
 
-      timerRef.current = setTimeout(() => {
-        setShow(false);
-      }, duration);
-    },
-    [duration],
+      warning: (message: string) => {
+        toast.warning(message);
+      },
+
+      info: (message: string) => {
+        toast.info(message);
+      },
+    }),
+    [],
   );
-
-  return {
-    message,
-    show,
-    open,
-  };
 }
