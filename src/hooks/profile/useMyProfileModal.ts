@@ -1,13 +1,13 @@
-import { useState, useCallback } from 'react';
+'use client';
+
+import { useCallback, useState } from 'react';
 import { api } from '@/lib/axios';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/common/useToast';
 import type { User } from '@/types/user';
 
-// Types
+export type ModalType = 'followers' | 'following' | null;
 
-type ModalType = 'followers' | 'following' | null;
-
-interface ModalUser {
+export interface ModalUser {
   id: number;
   name: string;
   username: string;
@@ -20,54 +20,65 @@ interface FollowResponse {
   users?: User[];
 }
 
-// Helper
-
+// Normalize API response into a flat user array.
 const extractUsers = (raw: User[] | FollowResponse | null): User[] => {
   if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
+
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+
   return raw.followers ?? raw.following ?? raw.users ?? [];
 };
 
-const toModalUser = (u: User): ModalUser => ({
-  id: u.id,
-  name: u.name,
-  username: u.username,
-  avatar: u.avatarUrl ?? '',
+// Transform API user into modal user model.
+const toModalUser = (user: User): ModalUser => ({
+  id: user.id,
+  name: user.name,
+  username: user.username,
+  avatar: user.avatarUrl ?? '',
 });
 
-// Hook
-
-/**
- * Manages followers/following modal state for a user profile.
- * Fetches the list lazily when the modal is opened.
- */
+// Handles followers/following modal state and lazy data fetching.
 export function useMyProfileModal(username?: string) {
+  const toast = useToast();
   const [modal, setModal] = useState<ModalType>(null);
   const [modalUsers, setModalUsers] = useState<ModalUser[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
 
   const openModal = useCallback(
-    async (type: 'followers' | 'following') => {
+    async (type: Exclude<ModalType, null>) => {
       if (!username) return;
+
       setModal(type);
       setModalUsers([]);
       setModalLoading(true);
+
       try {
         const res = await api.get<{ data: User[] | FollowResponse }>(
           `/users/${username}/${type}`,
         );
-        setModalUsers(extractUsers(res.data?.data).map(toModalUser));
+
+        setModalUsers(extractUsers(res.data.data).map(toModalUser));
       } catch {
-        toast.error(`Failed to load list ${type}`);
+        toast.error(`Failed to load ${type}.`);
         setModalUsers([]);
       } finally {
         setModalLoading(false);
       }
     },
-    [username],
+    [username, toast],
   );
 
-  const closeModal = useCallback(() => setModal(null), []);
+  const closeModal = useCallback(() => {
+    setModal(null);
+  }, []);
 
-  return { modal, modalUsers, modalLoading, openModal, closeModal };
+  return {
+    modal,
+    modalUsers,
+    modalLoading,
+    openModal,
+    closeModal,
+  };
 }
