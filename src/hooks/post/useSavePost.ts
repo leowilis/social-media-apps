@@ -1,10 +1,10 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { savesApi } from '@/lib/api/saves';
 import { meKeys } from '@/hooks/profile/key';
+import { useToast } from '@/hooks/common/useToast';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addSave, removeSave } from '@/store/slices/saveSlice';
 
@@ -12,10 +12,10 @@ interface UseSavePostProps {
   postId: number;
 }
 
-// Handles save and unsave actions for a post.
 export function useSavePost({ postId }: UseSavePostProps) {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
+  const toast = useToast();
 
   const saved = useAppSelector((state) =>
     state.saves.savedPostIds.includes(postId),
