@@ -1,36 +1,27 @@
 'use client';
 
-import { useToast } from '@/hooks/common/useToast';
-
+import { useDeletePost } from './useDeletePost';
 import { useLikePost } from './useLikePost';
 import { useSavePost } from './useSavePost';
-import { useDeletePost } from './useDeletePost';
 
 interface UsePostActionsProps {
   postId: number;
   initialLikeCount: number;
 }
 
-// Combines post action hooks into a single interface for the UI.
+// Combines all post interaction hooks into a single interface.
 export function usePostActions({
   postId,
   initialLikeCount,
 }: UsePostActionsProps) {
-  const toast = useToast();
-
   const like = useLikePost({
     postId,
     initialLikeCount,
   });
 
-  const save = useSavePost(
-    {
-      postId,
-    },
-    {
-      onSuccess: toast.open,
-    },
-  );
+  const save = useSavePost({
+    postId,
+  });
 
   const remove = useDeletePost(postId);
 
@@ -38,6 +29,5 @@ export function usePostActions({
     ...like,
     ...save,
     ...remove,
-    toast,
   };
 }
