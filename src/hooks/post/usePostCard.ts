@@ -2,16 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { useToast } from '@/hooks/common/useToast';
 import { useToggleLike } from '@/hooks/post/useLike';
 import { useToggleSave, useIsSaved } from '@/hooks/post/useSave';
 import { useAppSelector } from '@/store/hooks';
-
 import type { Post } from '@/types/post';
 
 export function usePostCard(post: Post) {
   const router = useRouter();
-
+  const toast = useToast();
   const toggleLike = useToggleLike(post.id);
   const toggleSave = useToggleSave(post.id);
 
@@ -24,18 +23,7 @@ export function usePostCard(post: Post) {
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const [showToast, setShowToast] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-
-  const showNotif = (message: string) => {
-    setToastMsg(message);
-    setShowToast(true);
-
-    setTimeout(() => {
-      setShowToast(false);
-    }, 2500);
-  };
 
   const handleLike = () => {
     toggleLike.mutate(liked);
@@ -43,8 +31,9 @@ export function usePostCard(post: Post) {
 
   const handleSave = () => {
     toggleSave.mutate(saved, {
-      onSuccess: () => showNotif(saved ? 'Removed from saved' : 'Post saved!'),
-      onError: () => showNotif('Something went wrong'),
+      onSuccess: () =>
+        toast.success(saved ? 'Removed from saved' : 'Post saved!'),
+      onError: () => toast.error('Something went wrong. Please try again.'),
     });
   };
 
@@ -58,12 +47,12 @@ export function usePostCard(post: Post) {
   };
 
   const handleCommentClick = () => {
-    if (window.innerWidth >= 768) {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
       openDesktopPost();
       return;
     }
 
-    openComments();
+    setShowComments(true);
   };
 
   const handleDeleteConfirm = () => {
@@ -115,29 +104,42 @@ export function usePostCard(post: Post) {
   };
 
   return {
+    // state
     liked,
     saved,
     commentCount,
     showFull,
     showComments,
     showLikes,
-    toastMsg,
-    showToast,
     deleteTarget,
+
+    // loading state
+    isPendingLike: toggleLike.isPending,
+    isPendingSave: toggleSave.isPending,
+
+    // mutation
     toggleLike,
     toggleSave,
+
+    // handlers
     handleLike,
     handleSave,
     handleCommentClick,
     handleDeleteConfirm,
     toggleCaption,
+
+    // likes
     openLikes,
     closeLikes,
+
+    // comments
     openComments,
     closeComments,
-    cancelDelete,
     incrementComment,
     decrementComment,
     requestDeleteComment,
+
+    // delete
+    cancelDelete,
   };
 }
