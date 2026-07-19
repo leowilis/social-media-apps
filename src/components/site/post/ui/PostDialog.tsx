@@ -1,8 +1,8 @@
 'use client';
 
+import CommentSection from '../comment/CommentSection';
 import { DeleteDialog } from './DeleteDialog';
 import { LikesSheet } from '@/components/features/likes/LikesSheet';
-import { CommentSection } from './CommentSection';
 
 interface PostDialogsProps {
   postId: number;
