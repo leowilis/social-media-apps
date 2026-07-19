@@ -1,19 +1,25 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 
 import { postsApi } from '@/lib/api/posts';
 import { postKeys } from '@/hooks/post/key';
 
-/**
- * Creates a new post and refreshes related post queries.
- */
+interface CreatePostPayload {
+  image: File;
+  caption?: string;
+}
+
 export function useCreatePost() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (payload: { image: File; caption?: string }) =>
-      postsApi.createPost(payload),
+  return useMutation<
+    Awaited<ReturnType<typeof postsApi.createPost>>,
+    AxiosError,
+    CreatePostPayload
+  >({
+    mutationFn: (payload) => postsApi.createPost(payload),
 
     onSuccess: async () => {
       await Promise.all([
