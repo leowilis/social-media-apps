@@ -9,13 +9,13 @@ import { useToggleFollow } from '@/hooks/profile/useFollow';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import EmptyState from '@/components/common/EmptyState';
-import { PostDetail } from '@/components/site/post/ui/PostDetail';
 import ProfileHeader from '../myProfile/ProfileHeader';
 import ProfileStats from '../myProfile/ProfileStats';
 import ProfilePostGrid from '../myProfile/ProfilePostGrid';
 import UserProfileNavbar from './UserProfileNavbar';
 import UserProfileActions from './UserProfileActions';
 import UserProfileTabs, { type UserProfileTab } from './UserProfileTabs';
+import { PostDetail } from '../post/detail/PostDetail';
 
 interface UserProfileProps {
   username: string;
