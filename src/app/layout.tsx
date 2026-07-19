@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import './globals.css';
-import ProviderContainer from "@/app/provider/index"
+import ProviderContainer from '@/app/provider/index';
 
 /**
  * Local SF Pro font configuration.
