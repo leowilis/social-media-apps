@@ -1,11 +1,9 @@
-'use client';
+import { useAppSelector } from "@/store/hooks";
 
-import { useAppSelector } from '@/store/hooks';
+export function useIsLoggedIn(): boolean | null {
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
-/**
- * Returns authentication status from Redux.
- * Redux is the single source of truth for auth state.
- */
-export function useIsLoggedIn(): boolean {
-  return useAppSelector((state) => state.auth.isAuthenticated);
+  if (isLoading) return null;
+  return isAuthenticated;
 }
