@@ -4,11 +4,15 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-  InfiniteData,
+  type InfiniteData,
 } from '@tanstack/react-query';
+
 import { likesApi } from '@/lib/api/likes';
 import { addLike, removeLike } from '@/store/slices/likeSlice';
 import { useAppDispatch } from '@/store/hooks';
+
+import { likeKeys } from './key';
+
 import type { Post } from '@/types/post';
 import type { FeedResponse } from '@/lib/api/feed';
 
@@ -25,44 +29,35 @@ function updateFeedPages(
   updater: (post: Post) => Post,
 ): FeedCache | undefined {
   if (!old) return old;
+
   return {
     ...old,
     pages: old.pages.map((page) => ({
       ...page,
-      items: page.items.map((p) => (p.id === postId ? updater(p) : p)),
+      items: page.items.map((post) =>
+        post.id === postId ? updater(post) : post,
+      ),
     })),
   };
 }
 
-// Query Keys
+// Fetch likes
 
-const likeKeys = {
-  post: (postId: number) => ['posts', postId] as const,
-  likes: (postId: number) => ['posts', postId, 'likes'] as const,
-  feed: ['feed'] as const,
-  myLikes: ['me', 'likes'] as const,
-};
-
-/**
- * Fetches users who liked a post.
- * Only runs when explicitly enabled (e.g. when modal is open).
- */
 export function usePostLikes(postId: number, enabled = false) {
   return useQuery({
     queryKey: likeKeys.likes(postId),
+
     queryFn: async () => {
       const res = await likesApi.getPostLikes(postId);
       return res.data.data.users;
     },
-    enabled: !!postId && enabled,
+
+    enabled: enabled && !!postId,
   });
 }
 
-/**
- * Toggles like/unlike on a post with optimistic update.
- * Also syncs with Redux likes slice for persistence.
- * Reverts on error and invalidates cache on settle.
- */
+// Toggle Like
+
 export function useToggleLike(postId: number) {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
@@ -71,46 +66,55 @@ export function useToggleLike(postId: number) {
     mutationFn: (isLiked: boolean) =>
       isLiked ? likesApi.unlikePost(postId) : likesApi.likePost(postId),
 
-    onMutate: async (isLiked: boolean) => {
-      await queryClient.cancelQueries({ queryKey: likeKeys.post(postId) });
-      await queryClient.cancelQueries({ queryKey: likeKeys.feed });
+    onMutate: async (isLiked) => {
+      await queryClient.cancelQueries({
+        queryKey: likeKeys.post(postId),
+      });
+
+      await queryClient.cancelQueries({
+        queryKey: likeKeys.feed,
+      });
 
       const previous = queryClient.getQueryData<Post>(likeKeys.post(postId));
 
-      // Sync Redux store
       dispatch(isLiked ? removeLike(postId) : addLike(postId));
 
       const updater = (post: Post): Post => ({
         ...post,
         likedByMe: !isLiked,
         likeCount: isLiked
-          ? (post.likeCount ?? 0) - 1
+          ? Math.max((post.likeCount ?? 0) - 1, 0)
           : (post.likeCount ?? 0) + 1,
       });
 
-      // Update post detail cache
       queryClient.setQueryData<Post>(likeKeys.post(postId), (old) =>
         old ? updater(old) : old,
       );
 
-      // Update feed cache
       queryClient.setQueriesData<FeedCache>(
-        { queryKey: likeKeys.feed },
+        {
+          queryKey: likeKeys.feed,
+        },
         (old) => updateFeedPages(old, postId, updater),
       );
 
       return { previous };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (_error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(likeKeys.post(postId), context.previous);
       }
-      queryClient.invalidateQueries({ queryKey: likeKeys.feed });
+
+      queryClient.invalidateQueries({
+        queryKey: likeKeys.feed,
+      });
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: likeKeys.myLikes });
+      queryClient.invalidateQueries({
+        queryKey: likeKeys.myLikes,
+      });
     },
   });
 }
