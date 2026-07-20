@@ -10,6 +10,7 @@ import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { hydrateLikes } from '@/store/slices/likeSlice';
 import { hydrateSaves } from '@/store/slices/saveSlice';
+import { hydrateAuth } from '@/store/slices/authSlice';
 
 interface ProviderContainerProps {
   children: ReactNode;
@@ -33,9 +34,10 @@ export default function ProviderContainer({
   );
 
   useEffect(() => {
-    store.dispatch(hydrateLikes());
-    store.dispatch(hydrateSaves());
-  }, []);
+  store.dispatch(hydrateAuth());
+  store.dispatch(hydrateLikes());
+  store.dispatch(hydrateSaves());
+}, []);
 
   return (
     <Provider store={store}>
