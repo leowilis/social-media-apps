@@ -5,6 +5,7 @@ export interface User {
   username: string;
   avatarUrl?: string;
   bio?: string;
+  isFollowing?: boolean;
 }
 
 /**
