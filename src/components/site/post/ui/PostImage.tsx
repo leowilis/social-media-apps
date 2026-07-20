@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import type { Post } from '@/types/post';
-import { Button } from '@/components/ui/button';
 
 interface PostImageProps {
   post: Post;
