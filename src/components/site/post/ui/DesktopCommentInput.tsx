@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { IoHappyOutline } from 'react-icons/io5';
 import { useAddComment } from '@/hooks/post/useComments';
 import { useMe } from '@/hooks/profile/useMe';
-import type { Comment } from '@/lib/api/comment';
 
 interface DesktopCommentInputProps {
   postId: number;
@@ -17,7 +16,7 @@ export default function DesktopCommentInput({
   onCommentAdded,
 }: DesktopCommentInputProps) {
   const { me } = useMe();
-  const addMutation = useAddComment(postId, me as Comment['author']);
+  const addMutation = useAddComment(postId, me);
   const [text, setText] = useState('');
   const handleSend = () => {
     const trimmedValue = text.trim();
