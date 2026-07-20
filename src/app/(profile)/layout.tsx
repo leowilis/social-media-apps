@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-
 import { useMe } from '@/hooks/profile/useMe';
 
 import Navbar from '@/components/site/header/Navbar';
@@ -21,27 +19,25 @@ import {
   IoPersonOutline,
   IoSettingsOutline,
 } from 'react-icons/io5';
+import { useLogout } from '@/hooks/auth/useLogout';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
 }
 
-export default function ProfileLayout({
-  children,
-}: ProfileLayoutProps) {
+export default function ProfileLayout({ children }: ProfileLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const queryClient = useQueryClient();
-
   const { me } = useMe();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const avatarFallback = me?.name?.charAt(0).toUpperCase() ?? '';
-
+  const logout = useLogout({
+    onBeforeLogout: () => setSidebarOpen(false),
+  });
   const isUserProfile = pathname.startsWith('/profile/');
-  const hideBottomNav =
-    pathname === '/editprofile' || pathname === '/addpost';
+  const hideBottomNav = pathname === '/editprofile' || pathname === '/addpost';
 
   const showMobileHeader = !isUserProfile;
 
@@ -57,17 +53,6 @@ export default function ProfileLayout({
         return me?.name ?? '';
     }
   })();
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    document.cookie = 'token=; path=/; max-age=0';
-
-    queryClient.clear();
-
-    setSidebarOpen(false);
-
-    router.replace('/login');
-  };
 
   return (
     <div className='min-h-screen bg-black text-white'>
@@ -109,10 +94,7 @@ export default function ProfileLayout({
           {/* User */}
           <div className='flex items-center gap-3 border-b border-[rgba(126,145,183,0.2)] px-3 py-4'>
             <Avatar className='size-12 border border-[rgba(126,145,183,0.32)]'>
-              <AvatarImage
-                src={me?.avatarUrl ?? ''}
-                alt={me?.name}
-              />
+              <AvatarImage src={me?.avatarUrl ?? ''} alt={me?.name} />
 
               <AvatarFallback className='font-bold'>
                 {avatarFallback}
@@ -121,9 +103,7 @@ export default function ProfileLayout({
 
             <div>
               <p className='font-bold'>{me?.name}</p>
-              <p className='text-xs text-neutral-400'>
-                {me?.username}
-              </p>
+              <p className='text-xs text-neutral-400'>{me?.username}</p>
             </div>
           </div>
 
@@ -135,9 +115,7 @@ export default function ProfileLayout({
               className='flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-[rgba(126,145,183,0.12)]'
             >
               <IoPersonOutline className='size-5 text-neutral-400' />
-              <span className='text-sm font-semibold'>
-                My Profile
-              </span>
+              <span className='text-sm font-semibold'>My Profile</span>
             </Link>
 
             <Link
@@ -146,9 +124,7 @@ export default function ProfileLayout({
               className='flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-[rgba(126,145,183,0.12)]'
             >
               <IoBookmarkOutline className='size-5 text-neutral-400' />
-              <span className='text-sm font-semibold'>
-                Saved Posts
-              </span>
+              <span className='text-sm font-semibold'>Saved Posts</span>
             </Link>
 
             <Link
@@ -157,22 +133,18 @@ export default function ProfileLayout({
               className='flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-[rgba(126,145,183,0.12)]'
             >
               <IoSettingsOutline className='size-5 text-neutral-400' />
-              <span className='text-sm font-semibold'>
-                Edit Profile
-              </span>
+              <span className='text-sm font-semibold'>Edit Profile</span>
             </Link>
           </nav>
 
           {/* Logout */}
           <div className='border-t border-[rgba(126,145,183,0.2)] px-3 py-4'>
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className='flex w-full items-center gap-3 rounded-xl px-4 py-3 text-red-400 transition-colors hover:bg-red-500/10'
             >
               <IoLogOutOutline className='size-5' />
-              <span className='text-sm font-semibold'>
-                Logout
-              </span>
+              <span className='text-sm font-semibold'>Logout</span>
             </button>
           </div>
         </aside>
@@ -190,9 +162,7 @@ export default function ProfileLayout({
                 <IoArrowBackOutline className='size-6' />
               </Button>
 
-              <span className='font-bold'>
-                {headerTitle}
-              </span>
+              <span className='font-bold'>{headerTitle}</span>
             </div>
 
             {!hideBottomNav && (
@@ -200,14 +170,9 @@ export default function ProfileLayout({
                 className='size-11 cursor-pointer border border-[rgba(126,145,183,0.32)]'
                 onClick={() => setSidebarOpen(true)}
               >
-                <AvatarImage
-                  src={me?.avatarUrl ?? ''}
-                  alt={me?.name}
-                />
+                <AvatarImage src={me?.avatarUrl ?? ''} alt={me?.name} />
 
-                <AvatarFallback>
-                  {avatarFallback}
-                </AvatarFallback>
+                <AvatarFallback>{avatarFallback}</AvatarFallback>
               </Avatar>
             )}
           </header>
