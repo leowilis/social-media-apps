@@ -17,19 +17,16 @@ import type { User } from '@/types/user';
 import type { Post } from '@/types/post';
 
 // Types
-
 type CommentsPage = CommentsResponse['data'];
 type CommentsCache = InfiniteData<CommentsPage>;
 
 // Query Keys
-
 const commentKeys = {
   list: (postId: number) => ['posts', postId, 'comments'] as const,
   post: (postId: number) => ['posts', postId] as const,
 };
 
 // Fetch Comments
-
 export function useComments(postId: number) {
   return useInfiniteQuery({
     queryKey: commentKeys.list(postId),
@@ -52,15 +49,16 @@ export function useComments(postId: number) {
 }
 
 // Add Comment
-
-export function useAddComment(postId: number, currentUser: User | null) {
+export function useAddComment(postId: number, currentUser?: User) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (text: string) => commentsApi.addComment(postId, text),
 
     onMutate: async (text: string) => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        throw new Error('User not found');
+      }
 
       await queryClient.cancelQueries({
         queryKey: commentKeys.list(postId),
@@ -109,7 +107,7 @@ export function useAddComment(postId: number, currentUser: User | null) {
       return { previous };
     },
 
-    onError: (_error, _variables, context) => {
+    onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(commentKeys.list(postId), context.previous);
       }
@@ -124,7 +122,6 @@ export function useAddComment(postId: number, currentUser: User | null) {
 }
 
 // Delete Comment
-
 export function useDeleteComment(postId: number) {
   const queryClient = useQueryClient();
 
@@ -169,7 +166,7 @@ export function useDeleteComment(postId: number) {
       return { previous };
     },
 
-    onError: (_error, _variables, context) => {
+    onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(commentKeys.list(postId), context.previous);
       }
