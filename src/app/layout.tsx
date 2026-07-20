@@ -2,12 +2,9 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import './globals.css';
-import ProviderContainer from '@/app/provider/index';
 
-/**
- * Local SF Pro font configuration.
- * Uses CSS variable for Tailwind / global usage.
- */
+import ProviderContainer from '@/app/provider';
+
 const sfPro = localFont({
   src: [
     {
@@ -27,20 +24,14 @@ const sfPro = localFont({
     },
   ],
   variable: '--font-sfpro',
-  display: 'swap', // better performance
+  display: 'swap',
 });
 
-// Global metadata
 export const metadata: Metadata = {
   title: 'Sociality',
   description: 'Social media app',
 };
 
-/**
- * Root layout component
- * - Applies global font
- * - Wraps app with providers (Redux, React Query, etc.)
- */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang='en'>
