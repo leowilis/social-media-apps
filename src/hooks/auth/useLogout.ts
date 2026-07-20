@@ -7,17 +7,9 @@ import { useAppDispatch } from '@/store/hooks';
 import { clearAuth } from '@/store/slices/authSlice';
 
 interface UseLogoutOptions {
-  /**
-   * Called before logout.
-   * Useful for closing sidebar/dropdown.
-   */
   onBeforeLogout?: () => void;
 }
 
-/**
- * Clears authentication state and cached user data,
- * then redirects to the login page.
- */
 export function useLogout({ onBeforeLogout }: UseLogoutOptions = {}) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
@@ -26,13 +18,17 @@ export function useLogout({ onBeforeLogout }: UseLogoutOptions = {}) {
   const logout = () => {
     onBeforeLogout?.();
 
-    // Clear Redux auth (also removes localStorage + cookie)
     dispatch(clearAuth());
 
-    // Remove all cached API data
+    // clear localStorage
+    localStorage.removeItem('auth');
+
+    // clear cookie
+    document.cookie =
+      'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+
     queryClient.clear();
 
-    // Prevent navigating back into authenticated pages
     router.replace('/login');
   };
 
