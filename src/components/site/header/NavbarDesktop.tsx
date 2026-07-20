@@ -5,11 +5,11 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { DesktopUserDropdown } from './DesktopUserDropdown';
-import { SearchBar } from '../search/SearchBar';
 
 import Logo from '@/public/assets/logo/Logo.svg';
 import { User } from '@/types/user';
 import { AuthUser } from '@/types/auth';
+import SearchBar from '../search/SearchBar';
 
 
 interface NavbarDesktopProps {
@@ -56,7 +56,6 @@ export function NavbarDesktop({
 
       {/* Search */}
       <SearchBar
-        variant='desktop'
         query={query}
         users={users}
         loading={loading}
