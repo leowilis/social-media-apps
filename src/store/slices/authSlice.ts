@@ -4,47 +4,43 @@ import type { AuthUser, AuthState } from '@/types/auth';
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 
-/**
- * Loads persisted authentication state.
- * Safe for SSR.
- */
-function loadFromStorage(): AuthState {
-  if (typeof window === 'undefined') {
-    return {
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-    };
-  }
-
-  try {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const rawUser = localStorage.getItem(USER_KEY);
-
-    const user = rawUser ? (JSON.parse(rawUser) as AuthUser) : null;
-
-    return {
-      user,
-      token,
-      isAuthenticated: Boolean(token && user),
-      isLoading: false,
-    };
-  } catch {
-    return {
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false,
-    };
-  }
-}
+const initialState: AuthState = {
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  isLoading: true,
+};
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: loadFromStorage(),
+  initialState,
 
   reducers: {
+    /**
+     * Hydrate auth state from localStorage.
+     * Call once after app mounts.
+     */
+    hydrateAuth(state) {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const rawUser = localStorage.getItem(USER_KEY);
+
+        const user = rawUser ? (JSON.parse(rawUser) as AuthUser) : null;
+
+        state.token = token;
+        state.user = user;
+        state.isAuthenticated = Boolean(token && user);
+        state.isLoading = false;
+      } catch {
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.isLoading = false;
+      }
+    },
+
     /**
      * Login/Register success
      */
@@ -115,6 +111,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAuth, clearAuth, updateUser } = authSlice.actions;
+export const { hydrateAuth, setAuth, clearAuth, updateUser } =
+  authSlice.actions;
 
 export default authSlice.reducer;
