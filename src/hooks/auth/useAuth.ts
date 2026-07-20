@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { setAuth, clearAuth } from '@/store/slices/authSlice';
+import { setAuth } from '@/store/slices/authSlice';
 import { useAppDispatch } from '@/store/hooks';
+import { useLogout } from './useLogout';
 import {
   authApi,
   type AuthResponse,
@@ -49,10 +50,7 @@ export function useAuth() {
   });
 
   // ── Logout ─
-  const logout = (): void => {
-    dispatch(clearAuth());
-    router.push('/login');
-  };
+ const logout = useLogout();
 
   return {
     /**
