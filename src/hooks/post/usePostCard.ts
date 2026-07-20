@@ -2,23 +2,24 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/common/useToast';
+import { useSavePost } from './useSavePost';
 import { useToggleLike } from '@/hooks/post/useLike';
-import { useToggleSave, useIsSaved } from '@/hooks/post/useSave';
 import { useAppSelector } from '@/store/hooks';
 import type { Post } from '@/types/post';
 
 export function usePostCard(post: Post) {
   const router = useRouter();
-  const toast = useToast();
+
   const toggleLike = useToggleLike(post.id);
-  const toggleSave = useToggleSave(post.id);
+
+  const { saved, handleSave, isPendingSave } = useSavePost({
+    postId: post.id,
+  });
 
   const liked = useAppSelector((state) =>
     state.likes.likedPostIds.includes(post.id),
   );
 
-  const saved = useIsSaved(post.id);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [showFull, setShowFull] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -26,15 +27,9 @@ export function usePostCard(post: Post) {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const handleLike = () => {
-    toggleLike.mutate(liked);
-  };
+    if (toggleLike.isPending) return;
 
-  const handleSave = () => {
-    toggleSave.mutate(saved, {
-      onSuccess: () =>
-        toast.success(saved ? 'Removed from saved' : 'Post saved!'),
-      onError: () => toast.error('Something went wrong. Please try again.'),
-    });
+    toggleLike.mutate(liked);
   };
 
   const openDesktopPost = () => {
@@ -113,13 +108,9 @@ export function usePostCard(post: Post) {
     showLikes,
     deleteTarget,
 
-    // loading state
+    // loading
     isPendingLike: toggleLike.isPending,
-    isPendingSave: toggleSave.isPending,
-
-    // mutation
-    toggleLike,
-    toggleSave,
+    isPendingSave,
 
     // handlers
     handleLike,
