@@ -24,8 +24,8 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
     showComments,
     showLikes,
     deleteTarget,
-    toggleLike,
-    toggleSave,
+    isPendingLike,
+    isPendingSave,
     handleLike,
     handleSave,
     handleCommentClick,
@@ -55,8 +55,8 @@ export function PostCard({ post, currentUserId }: PostCardProps) {
           saved={saved}
           likeCount={post.likeCount}
           commentCount={commentCount}
-          isPendingLike={toggleLike.isPending}
-          isPendingSave={toggleSave.isPending}
+          isPendingLike={isPendingLike}
+          isPendingSave={isPendingSave}
           onLike={handleLike}
           onSave={handleSave}
           onLikeCountClick={openLikes}
