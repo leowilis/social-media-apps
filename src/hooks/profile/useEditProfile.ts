@@ -1,11 +1,14 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+
 import { api } from '@/lib/axios';
+import { useToast } from '@/hooks/common/useToast';
 
 // Types
-
 interface ProfileForm {
   name: string;
   username: string;
@@ -15,33 +18,30 @@ interface ProfileForm {
   avatarUrl: string | null;
 }
 
-// Query Key
-
+// Constants
 const ME_QUERY_KEY = ['me', 'profile'] as const;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 // Fetcher
-
 const fetchMe = async (): Promise<ProfileForm> => {
   const res = await api.get('/me');
-  const p = res.data.data?.profile ?? res.data.data;
+
+  const profile = res.data.data?.profile ?? res.data.data;
+
   return {
-    name: p.name ?? '',
-    username: p.username ?? '',
-    email: p.email ?? '',
-    phone: p.phone ?? '',
-    bio: p.bio ?? '',
-    avatarUrl: p.avatarUrl ?? null,
+    name: profile.name ?? '',
+    username: profile.username ?? '',
+    email: profile.email ?? '',
+    phone: profile.phone ?? '',
+    bio: profile.bio ?? '',
+    avatarUrl: profile.avatarUrl ?? null,
   };
 };
 
 // Hook
-
-/**
- * Manages edit profile form state, avatar preview, and PATCH /me submission.
- * Invalidates the `me` query on success so Navbar and profile reflect changes.
- */
 export function useEditProfile() {
   const router = useRouter();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -58,58 +58,87 @@ export function useEditProfile() {
     bio: '',
     avatarUrl: null,
   });
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
 
-  // Sync form when query data arrives
+  // Sync profile
   useEffect(() => {
-    if (data) setForm(data);
+    if (data) {
+      setForm(data);
+    }
   }, [data]);
 
+  // Cleanup object url
+  useEffect(() => {
+    if (!avatarPreview) return;
+
+    return () => {
+      URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
+
+  // Handlers
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    setForm((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-    setError('');
+    setForm((prev) => ({
+      ...prev,
+      [e.target.id]: e.target.value,
+    }));
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Only image files are allowed.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Maximum image size is 5 MB.');
+      return;
+    }
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+    }
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSaving) return;
     setIsSaving(true);
+
     try {
       const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('username', form.username);
-      formData.append('bio', form.bio);
-      formData.append('phone', form.phone);
-      if (avatarFile) formData.append('avatar', avatarFile);
+      formData.append('name', form.name.trim());
+      formData.append('username', form.username.trim());
+      formData.append('phone', form.phone.trim());
+      formData.append('bio', form.bio.trim());
 
+      if (avatarFile) {
+        formData.append('avatar', avatarFile);
+      }
       await api.patch('/me', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ME_QUERY_KEY,
       });
 
-      await queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        router.push('/myProfile');
-      }, 1500);
+      toast.success('Profile updated successfully.');
+      router.push('/myProfile');
     } catch (err) {
-      const msg = axios.isAxiosError(err)
+      const message = axios.isAxiosError(err)
         ? err.response?.data?.message
         : undefined;
-      setError(msg ?? 'Failed to update profile.');
+
+      toast.error(message ?? 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
@@ -120,8 +149,6 @@ export function useEditProfile() {
     avatarPreview,
     isLoading,
     isSaving,
-    success,
-    error,
     handleChange,
     handleAvatarChange,
     handleSubmit,
