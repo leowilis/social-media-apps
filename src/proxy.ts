@@ -19,12 +19,14 @@ export function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('from', pathname);
+
     return NextResponse.redirect(url);
   }
 
   if (isAuthRoute && token) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
+
     return NextResponse.redirect(url);
   }
 
