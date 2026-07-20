@@ -111,7 +111,11 @@ const authSlice = createSlice({
   },
 });
 
-export const { hydrateAuth, setAuth, clearAuth, updateUser } =
-  authSlice.actions;
+export const {
+  hydrateAuth,
+  setAuth,
+  clearAuth,
+  updateUser,
+} = authSlice.actions;
 
 export default authSlice.reducer;
