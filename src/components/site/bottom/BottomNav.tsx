@@ -22,7 +22,6 @@ export function HomeBottomNav() {
         px-6
         transition-all
         duration-500
-        pointer-events-none
         md:bottom-6
         ${
           visible && !searchActive
