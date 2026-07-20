@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { IoPaperPlaneOutline, IoSend } from 'react-icons/io5';
+import { IoPaperPlaneOutline } from 'react-icons/io5';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
