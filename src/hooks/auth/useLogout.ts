@@ -1,30 +1,39 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+
 import { useAppDispatch } from '@/store/hooks';
 import { clearAuth } from '@/store/slices/authSlice';
 
 interface UseLogoutOptions {
-  /** Called synchronously before the Redux state is cleared and redirect fires. */
+  /**
+   * Called before logout.
+   * Useful for closing sidebar/dropdown.
+   */
   onBeforeLogout?: () => void;
 }
 
 /**
- * Returns a `logout` function that:
- * 1. Calls `onBeforeLogout` (e.g. close sidebar/dropdown)
- * 2. Clears Redux auth state (also clears localStorage + cookie via authSlice)
- * 3. Clears TanStack Query cache so stale user data doesn't persist
- * 4. Redirects to `/login`
+ * Clears authentication state and cached user data,
+ * then redirects to the login page.
  */
 export function useLogout({ onBeforeLogout }: UseLogoutOptions = {}) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
-  const logout = (): void => {
+  const logout = () => {
     onBeforeLogout?.();
+
+    // Clear Redux auth (also removes localStorage + cookie)
     dispatch(clearAuth());
+
+    // Remove all cached API data
     queryClient.clear();
-    router.push('/login');
+
+    // Prevent navigating back into authenticated pages
+    router.replace('/login');
   };
 
   return logout;
