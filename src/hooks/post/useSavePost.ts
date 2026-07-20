@@ -12,6 +12,7 @@ interface UseSavePostProps {
   postId: number;
 }
 
+// Handles save / unsave post with optimistic Redux updates.
 export function useSavePost({ postId }: UseSavePostProps) {
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
@@ -25,7 +26,11 @@ export function useSavePost({ postId }: UseSavePostProps) {
     mutationFn: (wasSaved: boolean) =>
       wasSaved ? savesApi.unsavePost(postId) : savesApi.savePost(postId),
 
-    onMutate: (wasSaved) => {
+    onMutate: async (wasSaved) => {
+      await queryClient.cancelQueries({
+        queryKey: meKeys.saved,
+      });
+
       dispatch(wasSaved ? removeSave(postId) : addSave(postId));
     },
 
@@ -39,8 +44,8 @@ export function useSavePost({ postId }: UseSavePostProps) {
       toast.error('Failed to update saved posts.');
     },
 
-    onSettled: async () => {
-      await queryClient.invalidateQueries({
+    onSettled: () => {
+      queryClient.invalidateQueries({
         queryKey: meKeys.saved,
       });
     },
