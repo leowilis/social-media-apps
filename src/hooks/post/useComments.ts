@@ -1,16 +1,19 @@
 'use client';
 
 import {
-  useMutation,
   useInfiniteQuery,
+  useMutation,
   useQueryClient,
-  InfiniteData,
+  type InfiniteData,
 } from '@tanstack/react-query';
+
 import {
   commentsApi,
   type Comment,
   type CommentsResponse,
 } from '@/lib/api/comment';
+
+import type { User } from '@/types/user';
 import type { Post } from '@/types/post';
 
 // Types
@@ -25,40 +28,48 @@ const commentKeys = {
   post: (postId: number) => ['posts', postId] as const,
 };
 
-// FETCH COMMENTS
+// Fetch Comments
 
 export function useComments(postId: number) {
   return useInfiniteQuery({
     queryKey: commentKeys.list(postId),
+
     queryFn: async ({ pageParam = 1 }) => {
       const res = await commentsApi.getComments(postId, pageParam as number);
       return res.data.data;
     },
+
     initialPageParam: 1,
+
     getNextPageParam: (lastPage: CommentsPage) => {
       const { page, totalPages } = lastPage.pagination;
+
       return page < totalPages ? page + 1 : undefined;
     },
+
     enabled: !!postId,
   });
 }
 
-// ADD COMMENT
+// Add Comment
 
-export function useAddComment(postId: number, currentUser: Comment['author']) {
+export function useAddComment(postId: number, currentUser: User | null) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (text: string) => commentsApi.addComment(postId, text),
 
     onMutate: async (text: string) => {
-      await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+      if (!currentUser) return;
+
+      await queryClient.cancelQueries({
+        queryKey: commentKeys.list(postId),
+      });
 
       const previous = queryClient.getQueryData<CommentsCache>(
         commentKeys.list(postId),
       );
 
-      // Optimistic comment
       const optimistic: Comment = {
         id: Date.now(),
         text,
@@ -67,7 +78,6 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
         author: currentUser,
       };
 
-      // Update comments list
       queryClient.setQueryData<CommentsCache>(
         commentKeys.list(postId),
         (old) => {
@@ -75,61 +85,61 @@ export function useAddComment(postId: number, currentUser: Comment['author']) {
 
           return {
             ...old,
-            pages: old.pages.map((page, i) =>
-              i === 0
-                ? { ...page, comments: [optimistic, ...page.comments] }
+            pages: old.pages.map((page, index) =>
+              index === 0
+                ? {
+                    ...page,
+                    comments: [optimistic, ...page.comments],
+                  }
                 : page,
             ),
           };
         },
       );
 
-      // Update post commentCount 
-      queryClient.setQueryData<Post>(
-        commentKeys.post(postId),
-        (old) => {
-          if (!old) return old;
+      queryClient.setQueryData<Post>(commentKeys.post(postId), (old) => {
+        if (!old) return old;
 
-          return {
-            ...old,
-            commentCount: old.commentCount + 1,
-          };
-        },
-      );
+        return {
+          ...old,
+          commentCount: old.commentCount + 1,
+        };
+      });
 
       return { previous };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (_error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(commentKeys.list(postId), context.previous);
       }
     },
 
     onSettled: () => {
-      // only refetch comments (NO flicker on post)
-      queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
+      queryClient.invalidateQueries({
+        queryKey: commentKeys.list(postId),
+      });
     },
   });
 }
 
-// DELETE COMMENT
+// Delete Comment
 
 export function useDeleteComment(postId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (commentId: number) =>
-      commentsApi.deleteComment(commentId),
+    mutationFn: (commentId: number) => commentsApi.deleteComment(commentId),
 
     onMutate: async (commentId: number) => {
-      await queryClient.cancelQueries({ queryKey: commentKeys.list(postId) });
+      await queryClient.cancelQueries({
+        queryKey: commentKeys.list(postId),
+      });
 
       const previous = queryClient.getQueryData<CommentsCache>(
         commentKeys.list(postId),
       );
 
-      // Remove comment
       queryClient.setQueryData<CommentsCache>(
         commentKeys.list(postId),
         (old) => {
@@ -139,36 +149,36 @@ export function useDeleteComment(postId: number) {
             ...old,
             pages: old.pages.map((page) => ({
               ...page,
-              comments: page.comments.filter((c) => c.id !== commentId),
+              comments: page.comments.filter(
+                (comment) => comment.id !== commentId,
+              ),
             })),
           };
         },
       );
 
-      // Update count
-      queryClient.setQueryData<Post>(
-        commentKeys.post(postId),
-        (old) => {
-          if (!old) return old;
+      queryClient.setQueryData<Post>(commentKeys.post(postId), (old) => {
+        if (!old) return old;
 
-          return {
-            ...old,
-            commentCount: Math.max(old.commentCount - 1, 0),
-          };
-        },
-      );
+        return {
+          ...old,
+          commentCount: Math.max(old.commentCount - 1, 0),
+        };
+      });
 
       return { previous };
     },
 
-    onError: (_err, _vars, context) => {
+    onError: (_error, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(commentKeys.list(postId), context.previous);
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: commentKeys.list(postId) });
+      queryClient.invalidateQueries({
+        queryKey: commentKeys.list(postId),
+      });
     },
   });
 }
