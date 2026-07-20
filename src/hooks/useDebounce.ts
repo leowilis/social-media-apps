@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+'use client';
 
-/**
- * Delays updating a value until after a specified delay.
- * Useful for reducing API calls on fast-changing inputs like search.
- */
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
+import { useEffect, useState } from 'react';
+
+// Delays value updates until the specified delay has elapsed.
+export function useDebounce<T>(value: T, delay = 350) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
+    const timeout = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timeout);
   }, [value, delay]);
 
-  return debounced;
+  return debouncedValue;
 }
