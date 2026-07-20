@@ -22,17 +22,22 @@ export function useLikePost({ postId, initialLikeCount }: UseLikePostProps) {
     state.likes.likedPostIds.includes(postId),
   );
 
-  const [likeCount, setLikeCount] = useState(() => initialLikeCount);
-
-  useEffect(() => {
-    setLikeCount(initialLikeCount);
-  }, [initialLikeCount]);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
 
   const mutation = useMutation({
     mutationFn: (wasLiked: boolean) =>
       wasLiked ? likesApi.unlikePost(postId) : likesApi.likePost(postId),
 
-    onMutate: (wasLiked) => {
+    onMutate: async (wasLiked) => {
+      await Promise.all([
+        queryClient.cancelQueries({
+          queryKey: postKeys.detail(postId),
+        }),
+        queryClient.cancelQueries({
+          queryKey: postKeys.feed,
+        }),
+      ]);
+
       setLikeCount((count) => (wasLiked ? Math.max(0, count - 1) : count + 1));
 
       dispatch(wasLiked ? removeLike(postId) : addLike(postId));
@@ -44,17 +49,20 @@ export function useLikePost({ postId, initialLikeCount }: UseLikePostProps) {
       dispatch(wasLiked ? addLike(postId) : removeLike(postId));
     },
 
-    onSettled: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: postKeys.detail(postId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: postKeys.feed,
-        }),
-      ]);
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: postKeys.detail(postId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: postKeys.feed,
+      });
     },
   });
+
+  useEffect(() => {
+    setLikeCount(initialLikeCount);
+  }, [initialLikeCount]);
 
   const handleLike = () => {
     if (mutation.isPending) return;
